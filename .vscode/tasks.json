@@ -405,6 +405,14 @@
 					"endsPattern": "Redirection server listening on.*"
 				}
 			}
+		},
+		{
+			"label": "HCode: Install & Build macOS",
+			"type": "shell",
+			"command": "npm install && npm run electron -- && node --max-old-space-size=8192 ./node_modules/gulp/bin/gulp.js vscode-darwin-arm64",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }

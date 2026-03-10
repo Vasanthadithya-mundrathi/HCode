@@ -1,5 +1,9 @@
 {
 	"servers": {
+		"hcode": {
+			"type": "http",
+			"url": "http://localhost:6767/mcp"
+		},
 		"vscode-automation-mcp": {
 			"type": "stdio",
 			"command": "npm",

@@ -1,0 +1,12 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="HCode sidebar icon">
+  <defs>
+    <linearGradient id="shield" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2bf784"/>
+      <stop offset="1" stop-color="#0f8dff"/>
+    </linearGradient>
+  </defs>
+  <path d="M32 6 52 14v15c0 13.8-8.7 24.8-20 29-11.3-4.2-20-15.2-20-29V14L32 6Z" fill="#07141a" stroke="url(#shield)" stroke-width="3"/>
+  <path d="M32 18 21 23v7c0 8 4.9 14.7 11 17 6.1-2.3 11-9 11-17v-7l-11-5Z" fill="url(#shield)" opacity=".18"/>
+  <path d="M25 34h14" stroke="url(#shield)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M32 27v14" stroke="url(#shield)" stroke-width="3" stroke-linecap="round"/>
+</svg>

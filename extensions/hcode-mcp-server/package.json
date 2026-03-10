@@ -1,0 +1,101 @@
+{
+  "name": "hcode-mcp-server",
+  "displayName": "HCode MCP Server",
+  "description": "Runs an HTTP Model Context Protocol server exposing all HCode security features as tools for AI agents (Cline, Kilo Code, GitHub Copilot agent mode, etc.)",
+  "version": "1.0.0",
+  "publisher": "hcode",
+  "license": "MIT",
+  "engines": { "vscode": "*" },
+  "categories": ["Other"],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:hcode.mcp.startServer",
+    "onCommand:hcode.mcp.stopServer",
+    "onCommand:hcode.mcp.copyServerUrl",
+    "onCommand:hcode.mcp.setAuthToken",
+    "onCommand:hcode.mcp.clearAuthToken"
+  ],
+  "main": "./out/extension",
+  "extensionDependencies": [
+    "hcode.hcode-bugbounty",
+    "hcode.hcode-devices",
+    "hcode.hcode-tools",
+    "hcode.hcode-ctf",
+    "hcode.hcode-skills"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "hcode.mcp.startServer",
+        "title": "Start MCP Server",
+        "category": "HCode MCP",
+        "icon": "$(broadcast)"
+      },
+      {
+        "command": "hcode.mcp.stopServer",
+        "title": "Stop MCP Server",
+        "category": "HCode MCP",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "hcode.mcp.copyServerUrl",
+        "title": "Copy MCP Server URL",
+        "category": "HCode MCP",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "hcode.mcp.setAuthToken",
+        "title": "Set MCP Auth Token",
+        "category": "HCode MCP",
+        "icon": "$(key)"
+      },
+      {
+        "command": "hcode.mcp.clearAuthToken",
+        "title": "Clear MCP Auth Token",
+        "category": "HCode MCP",
+        "icon": "$(trash)"
+      }
+    ],
+    "configuration": {
+      "title": "HCode MCP Server",
+      "properties": {
+        "hcode.mcp.port": {
+          "type": "number",
+          "default": 6767,
+          "description": "Port for the HCode MCP HTTP server. AI agents connect to http://localhost:<port>/mcp"
+        },
+        "hcode.mcp.autoStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically start the MCP server when HCode opens"
+        },
+        "hcode.mcp.requireAuth": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require a bearer token for MCP HTTP requests. Configure the token with the HCode MCP: Set MCP Auth Token command."
+        },
+        "hcode.mcp.allowedOrigins": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Additional browser origins allowed to access the MCP endpoint. Localhost and loopback origins are always allowed."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p tsconfig.json",
+    "watch": "tsc -watch -p tsconfig.json"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.26.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "*",
+    "@types/node": "*",
+    "@types/vscode": "*"
+  }
+}

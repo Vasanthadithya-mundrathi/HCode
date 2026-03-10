@@ -1,0 +1,84 @@
+{
+	"name": "hcode-skills",
+	"displayName": "HCode Skills",
+	"description": "Reusable hacking methodology playbooks — run multi-step attack chains powered by top community tools",
+	"version": "0.0.1",
+	"publisher": "hcode",
+	"engines": { "vscode": "^1.90.0" },
+	"categories": ["Other"],
+	"extensionDependencies": ["hcode.hcode-tools", "hcode.hcode-devices"],
+	"main": "./out/extension.js",
+	"contributes": {
+		"views": {
+			"hcode": [
+				{
+					"id": "hcode.skills.tree",
+					"name": "Skills",
+					"icon": "$(book)"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "hcode.skills.run",
+				"title": "Run Skill",
+				"icon": "$(play)",
+				"category": "HCode Skills"
+			},
+			{
+				"command": "hcode.skills.showPlaybook",
+				"title": "Show Playbook",
+				"icon": "$(book)",
+				"category": "HCode Skills"
+			},
+			{
+				"command": "hcode.skills.refresh",
+				"title": "Refresh",
+				"icon": "$(refresh)",
+				"category": "HCode Skills"
+			},
+			{
+				"command": "hcode.skills.runOnDevice",
+				"title": "Run on SSH Device",
+				"icon": "$(remote)",
+				"category": "HCode Skills"
+			}
+		],
+		"menus": {
+			"view/title": [
+				{
+					"command": "hcode.skills.refresh",
+					"when": "view == hcode.skills.tree",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "hcode.skills.run",
+					"when": "view == hcode.skills.tree && viewItem == skill",
+					"group": "inline"
+				},
+				{
+					"command": "hcode.skills.showPlaybook",
+					"when": "view == hcode.skills.tree && viewItem == skill",
+					"group": "inline"
+				},
+				{
+					"command": "hcode.skills.runOnDevice",
+					"when": "view == hcode.skills.tree && viewItem == skill",
+					"group": "1_run"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.90.0",
+		"@types/node": "20.x",
+		"typescript": "^5.4.0"
+	}
+}

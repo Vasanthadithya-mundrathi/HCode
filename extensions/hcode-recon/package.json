@@ -1,0 +1,70 @@
+{
+  "name": "hcode-recon",
+  "displayName": "HCode Recon",
+  "description": "Reconnaissance panel: nmap, subdomain enumeration, port scanning, and service fingerprinting.",
+  "version": "1.0.0",
+  "publisher": "hcode",
+  "license": "MIT",
+  "engines": { "vscode": "*" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "hcode.recon.newScan", "title": "HCode Recon: New Scan", "category": "HCode Recon", "icon": "$(search)" },
+      { "command": "hcode.recon.nmapQuick", "title": "HCode Recon: Quick Nmap Scan", "category": "HCode Recon" },
+      { "command": "hcode.recon.nmapFull", "title": "HCode Recon: Full Nmap Scan (all ports)", "category": "HCode Recon" },
+      { "command": "hcode.recon.nmapService", "title": "HCode Recon: Nmap Service/Version Scan", "category": "HCode Recon" },
+      { "command": "hcode.recon.subdomain", "title": "HCode Recon: Subdomain Enumeration", "category": "HCode Recon" },
+      { "command": "hcode.recon.whois", "title": "HCode Recon: WHOIS Lookup", "category": "HCode Recon" },
+      { "command": "hcode.recon.clearResults", "title": "HCode Recon: Clear Results", "category": "HCode Recon", "icon": "$(trash)" }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "hcode-recon",
+          "title": "HCode Recon",
+          "icon": "$(radio-tower)"
+        }
+      ]
+    },
+    "views": {
+      "hcode-recon": [
+        {
+          "id": "hcode.recon.targets",
+          "name": "Targets",
+          "icon": "$(target)"
+        },
+        {
+          "type": "webview",
+          "id": "hcode.recon.results",
+          "name": "Scan Results",
+          "icon": "$(output)"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "hcode.recon.newScan",
+          "when": "view == hcode.recon.targets",
+          "group": "navigation"
+        },
+        {
+          "command": "hcode.recon.clearResults",
+          "when": "view == hcode.recon.results",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p tsconfig.json",
+    "watch": "tsc -watch -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "*",
+    "@types/node": "*",
+    "@types/vscode": "*"
+  }
+}

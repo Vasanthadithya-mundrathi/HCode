@@ -1,0 +1,17 @@
+<svg width="360" height="112" viewBox="0 0 360 112" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ACE logo">
+  <defs>
+    <linearGradient id="aceBrand" x1="16" y1="16" x2="344" y2="96" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#30f2c5"/>
+      <stop offset="0.55" stop-color="#00b3ff"/>
+      <stop offset="1" stop-color="#8c62ff"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="344" height="96" rx="24" fill="#071019" stroke="url(#aceBrand)" stroke-width="2"/>
+  <path d="M34 77 58 31l24 46" fill="none" stroke="url(#aceBrand)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M45 58h26" fill="none" stroke="url(#aceBrand)" stroke-width="8" stroke-linecap="round"/>
+  <text x="106" y="52" fill="#ebf6ff" font-family="Segoe UI, sans-serif" font-size="34" font-weight="700">ACE</text>
+  <text x="106" y="79" fill="#8ba7bf" font-family="Segoe UI, sans-serif" font-size="16" letter-spacing="1.6">AUTONOMOUS CONTROL ENGINE</text>
+  <circle cx="315" cy="34" r="6" fill="#30f2c5"/>
+  <circle cx="334" cy="51" r="4" fill="#00b3ff"/>
+  <circle cx="304" cy="65" r="3" fill="#8c62ff"/>
+</svg>

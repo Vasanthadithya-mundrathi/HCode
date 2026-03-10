@@ -1,0 +1,82 @@
+{
+  "name": "hcode-binary",
+  "displayName": "HCode Binary Analysis",
+  "description": "Hex viewer, ELF/PE parser, entropy visualizer, and string extractor for binary files.",
+  "version": "1.0.0",
+  "publisher": "hcode",
+  "license": "MIT",
+  "engines": { "vscode": "*" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "hcode.binary.openHex", "title": "HCode Binary: Open in Hex Viewer", "category": "HCode Binary" },
+      { "command": "hcode.binary.parseHeaders", "title": "HCode Binary: Parse ELF / PE Headers", "category": "HCode Binary" },
+      { "command": "hcode.binary.entropy", "title": "HCode Binary: Show Entropy Chart", "category": "HCode Binary" },
+      { "command": "hcode.binary.strings", "title": "HCode Binary: Extract Strings", "category": "HCode Binary" }
+    ],
+    "customEditors": [
+      {
+        "viewType": "hcode.hexEditor",
+        "displayName": "HCode Hex Viewer",
+        "selector": [
+          { "filenamePattern": "*.bin" },
+          { "filenamePattern": "*.exe" },
+          { "filenamePattern": "*.elf" },
+          { "filenamePattern": "*.so" },
+          { "filenamePattern": "*.dll" },
+          { "filenamePattern": "*.o" },
+          { "filenamePattern": "*.out" }
+        ],
+        "priority": "option"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "hcode-binary",
+          "title": "HCode Binary",
+          "icon": "$(file-binary)"
+        }
+      ]
+    },
+    "views": {
+      "hcode-binary": [
+        {
+          "id": "hcode.binary.info",
+          "name": "File Info",
+          "icon": "$(info)"
+        },
+        {
+          "id": "hcode.binary.strings",
+          "name": "Strings",
+          "icon": "$(symbol-string)"
+        }
+      ]
+    },
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "hcode.binary.openHex",
+          "when": "resourceExtname =~ /\\.(bin|exe|elf|so|dll|o)$/",
+          "group": "hcode@1"
+        },
+        {
+          "command": "hcode.binary.strings",
+          "when": "resourceExtname =~ /\\.(bin|exe|elf|so|dll|o)$/",
+          "group": "hcode@2"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p tsconfig.json",
+    "watch": "tsc -watch -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "*",
+    "@types/node": "*",
+    "@types/vscode": "*"
+  }
+}

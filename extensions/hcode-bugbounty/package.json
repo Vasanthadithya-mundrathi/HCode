@@ -1,0 +1,155 @@
+{
+  "name": "hcode-bugbounty",
+  "displayName": "HCode Bug Bounty",
+  "description": "Bug bounty program manager: scope, rules of engagement, finding tracker, and report exporter.",
+  "version": "1.0.0",
+  "publisher": "hcode",
+  "license": "MIT",
+  "engines": { "vscode": "*" },
+  "categories": ["Other"],
+  "main": "./out/extension",
+  "contributes": {
+    "views": {
+      "hcode": [
+        {
+          "id": "hcode.bugbounty.programs",
+          "name": "Programs",
+          "icon": "$(shield)",
+          "contextualTitle": "Bug Bounty Programs"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "hcode.bugbounty.addProgram",
+        "title": "Add Program",
+        "icon": "$(add)",
+        "category": "HCode Bug Bounty"
+      },
+      {
+        "command": "hcode.bugbounty.removeProgram",
+        "title": "Delete Program",
+        "icon": "$(trash)",
+        "category": "HCode Bug Bounty"
+      },
+      {
+        "command": "hcode.bugbounty.addInScope",
+        "title": "Add In-Scope Target",
+        "icon": "$(add)",
+        "category": "HCode Bug Bounty"
+      },
+      {
+        "command": "hcode.bugbounty.addOutOfScope",
+        "title": "Add Out-of-Scope Target",
+        "icon": "$(add)",
+        "category": "HCode Bug Bounty"
+      },
+      {
+        "command": "hcode.bugbounty.removeScopeTarget",
+        "title": "Remove Target",
+        "icon": "$(remove)",
+        "category": "HCode Bug Bounty"
+      },
+      {
+        "command": "hcode.bugbounty.addRule",
+        "title": "Add Rule of Engagement",
+        "icon": "$(add)",
+        "category": "HCode Bug Bounty"
+      },
+      {
+        "command": "hcode.bugbounty.addFinding",
+        "title": "Add Finding",
+        "icon": "$(add)",
+        "category": "HCode Bug Bounty"
+      },
+      {
+        "command": "hcode.bugbounty.updateFindingStatus",
+        "title": "Update Finding Status",
+        "icon": "$(edit)",
+        "category": "HCode Bug Bounty"
+      },
+      {
+        "command": "hcode.bugbounty.removeFinding",
+        "title": "Delete Finding",
+        "icon": "$(trash)",
+        "category": "HCode Bug Bounty"
+      },
+      {
+        "command": "hcode.bugbounty.exportReport",
+        "title": "Export Markdown Report",
+        "icon": "$(export)",
+        "category": "HCode Bug Bounty"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "hcode.bugbounty.addProgram",
+          "when": "view == hcode.bugbounty.programs",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "hcode.bugbounty.addFinding",
+          "when": "viewItem == hcode.program || viewItem =~ /hcode\\.section\\.findings/",
+          "group": "inline@1"
+        },
+        {
+          "command": "hcode.bugbounty.exportReport",
+          "when": "viewItem == hcode.program",
+          "group": "inline@2"
+        },
+        {
+          "command": "hcode.bugbounty.removeProgram",
+          "when": "viewItem == hcode.program",
+          "group": "hcode@1"
+        },
+        {
+          "command": "hcode.bugbounty.addInScope",
+          "when": "viewItem == hcode.section.inScope",
+          "group": "inline@1"
+        },
+        {
+          "command": "hcode.bugbounty.addOutOfScope",
+          "when": "viewItem == hcode.section.outOfScope",
+          "group": "inline@1"
+        },
+        {
+          "command": "hcode.bugbounty.addRule",
+          "when": "viewItem == hcode.section.rules",
+          "group": "inline@1"
+        },
+        {
+          "command": "hcode.bugbounty.removeScopeTarget",
+          "when": "viewItem == hcode.scopeTarget",
+          "group": "inline@1"
+        },
+        {
+          "command": "hcode.bugbounty.updateFindingStatus",
+          "when": "viewItem == hcode.finding",
+          "group": "inline@1"
+        },
+        {
+          "command": "hcode.bugbounty.removeFinding",
+          "when": "viewItem == hcode.finding",
+          "group": "inline@2"
+        }
+      ],
+      "commandPalette": [
+        { "command": "hcode.bugbounty.addProgram" },
+        { "command": "hcode.bugbounty.addFinding" },
+        { "command": "hcode.bugbounty.exportReport" }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p tsconfig.json",
+    "watch": "tsc -watch -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "*",
+    "@types/node": "*",
+    "@types/vscode": "*"
+  }
+}

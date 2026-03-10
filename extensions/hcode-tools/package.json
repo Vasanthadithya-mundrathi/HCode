@@ -1,0 +1,97 @@
+{
+  "name": "hcode-tools",
+  "displayName": "HCode Security Tools",
+  "description": "Security tool runner: nmap, sqlmap, ffuf, gobuster, hydra, hashcat, subfinder, amass, httpx, nikto, and more — with preset argument templates.",
+  "version": "1.0.0",
+  "publisher": "hcode",
+  "license": "MIT",
+  "engines": { "vscode": "*" },
+  "categories": ["Other"],
+  "main": "./out/extension",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "hcode",
+          "title": "HCode",
+          "icon": "media/hcode-sidebar.svg"
+        }
+      ]
+    },
+    "views": {
+      "hcode": [
+        {
+          "id": "hcode.tools.list",
+          "name": "Tools",
+          "icon": "$(tools)",
+          "contextualTitle": "Security Tools"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "hcode.tools.run",
+        "title": "Run Tool",
+        "icon": "$(play)",
+        "category": "HCode Tools"
+      },
+      {
+        "command": "hcode.tools.refresh",
+        "title": "Refresh Tool Availability",
+        "icon": "$(refresh)",
+        "category": "HCode Tools"
+      },
+      {
+        "command": "hcode.tools.install",
+        "title": "Show Install Instructions",
+        "icon": "$(package)",
+        "category": "HCode Tools"
+      },
+      {
+        "command": "hcode.tools.checkAll",
+        "title": "Check All Tools",
+        "icon": "$(checklist)",
+        "category": "HCode Tools"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "hcode.tools.refresh",
+          "when": "view == hcode.tools.list",
+          "group": "navigation@1"
+        },
+        {
+          "command": "hcode.tools.run",
+          "when": "view == hcode.tools.list",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "hcode.tools.run",
+          "when": "viewItem == hcode.tool.installed",
+          "group": "inline@1"
+        },
+        {
+          "command": "hcode.tools.install",
+          "when": "viewItem == hcode.tool.missing",
+          "group": "inline@1"
+        }
+      ],
+      "commandPalette": [
+        { "command": "hcode.tools.run" },
+        { "command": "hcode.tools.checkAll" }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p tsconfig.json",
+    "watch": "tsc -watch -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "*",
+    "@types/node": "*",
+    "@types/vscode": "*"
+  }
+}

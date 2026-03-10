@@ -1,0 +1,238 @@
+{
+  "name": "hcode-ace",
+  "displayName": "HCode ACE",
+  "description": "ACE is HCode's unified autonomous control plane for provider routing, persona selection, protocol bridges, and security skill packs.",
+  "version": "1.0.0",
+  "publisher": "hcode",
+  "license": "MIT",
+  "engines": { "vscode": "*" },
+  "categories": ["Other"],
+  "main": "./out/extension",
+  "extensionDependencies": [
+    "hcode.hcode-mcp-server",
+    "hcode.hcode-skills",
+    "hcode.hcode-tools"
+  ],
+  "activationEvents": [
+    "onView:hcode.ace.panel",
+    "onCommand:hcode.ace.openDashboard",
+    "onCommand:hcode.ace.configureProviderKey",
+    "onCommand:hcode.ace.clearProviderKey",
+    "onCommand:hcode.ace.runPrompt",
+    "onCommand:hcode.ace.runObjective",
+    "onCommand:hcode.ace.copyMcpUrl",
+    "onCommand:hcode.ace.copyAcpSpec",
+    "onCommand:hcode.ace.showPersona",
+    "onCommand:hcode.ace.startMcpBridge",
+    "onCommand:hcode.ace.stopMcpBridge"
+  ],
+  "contributes": {
+    "views": {
+      "hcode": [
+        {
+          "id": "hcode.ace.panel",
+          "name": "ACE",
+          "icon": "media/ace-icon.svg",
+          "contextualTitle": "ACE Control Plane",
+          "when": "chatIsEnabled"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "hcode.ace.openDashboard",
+        "title": "Open ACE Dashboard",
+        "category": "HCode ACE",
+        "icon": "media/ace-icon.svg",
+        "enablement": "chatIsEnabled"
+      },
+      {
+        "command": "hcode.ace.configureProviderKey",
+        "title": "Configure Provider API Key",
+        "category": "HCode ACE",
+        "icon": "$(key)",
+        "enablement": "chatIsEnabled"
+      },
+      {
+        "command": "hcode.ace.clearProviderKey",
+        "title": "Clear Provider API Key",
+        "category": "HCode ACE",
+        "icon": "$(trash)",
+        "enablement": "chatIsEnabled"
+      },
+      {
+        "command": "hcode.ace.runPrompt",
+        "title": "Run ACE Prompt",
+        "category": "HCode ACE",
+        "icon": "$(send)",
+        "enablement": "chatIsEnabled"
+      },
+      {
+        "command": "hcode.ace.runObjective",
+        "title": "Run ACE Objective",
+        "category": "HCode ACE",
+        "icon": "$(run-all)",
+        "enablement": "chatIsEnabled"
+      },
+      {
+        "command": "hcode.ace.copyMcpUrl",
+        "title": "Copy MCP URL",
+        "category": "HCode ACE",
+        "icon": "$(broadcast)",
+        "enablement": "chatIsEnabled"
+      },
+      {
+        "command": "hcode.ace.copyAcpSpec",
+        "title": "Copy ACP Beta Spec",
+        "category": "HCode ACE",
+        "icon": "$(hubot)",
+        "enablement": "chatIsEnabled"
+      },
+      {
+        "command": "hcode.ace.showPersona",
+        "title": "Show ACE Persona",
+        "category": "HCode ACE",
+        "icon": "$(comment-discussion)",
+        "enablement": "chatIsEnabled"
+      },
+      {
+        "command": "hcode.ace.startMcpBridge",
+        "title": "Start MCP Bridge",
+        "category": "HCode ACE",
+        "icon": "$(play)",
+        "enablement": "chatIsEnabled"
+      },
+      {
+        "command": "hcode.ace.stopMcpBridge",
+        "title": "Stop MCP Bridge",
+        "category": "HCode ACE",
+        "icon": "$(debug-stop)",
+        "enablement": "chatIsEnabled"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "hcode.ace.configureProviderKey",
+          "when": "view == hcode.ace.panel && chatIsEnabled",
+          "group": "navigation@1"
+        },
+        {
+          "command": "hcode.ace.copyMcpUrl",
+          "when": "view == hcode.ace.panel && chatIsEnabled",
+          "group": "navigation@2"
+        },
+        {
+          "command": "hcode.ace.runPrompt",
+          "when": "view == hcode.ace.panel && chatIsEnabled",
+          "group": "navigation@3"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "hcode.ace.openDashboard",
+          "when": "chatIsEnabled"
+        },
+        {
+          "command": "hcode.ace.configureProviderKey",
+          "when": "chatIsEnabled"
+        },
+        {
+          "command": "hcode.ace.copyAcpSpec",
+          "when": "chatIsEnabled"
+        },
+        {
+          "command": "hcode.ace.runPrompt",
+          "when": "chatIsEnabled"
+        },
+        {
+          "command": "hcode.ace.runObjective",
+          "when": "chatIsEnabled"
+        },
+        {
+          "command": "hcode.ace.showPersona",
+          "when": "chatIsEnabled"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "HCode ACE",
+      "properties": {
+        "hcode.ace.activeProvider": {
+          "type": "string",
+          "default": "openai",
+          "enum": ["openai", "anthropic", "google-gemini", "openrouter", "ollama", "azure-openai", "qwen-compatible"],
+          "description": "The default ACE model provider used by the control plane. API keys are stored in VS Code secret storage, not in settings."
+        },
+        "hcode.ace.defaultPersona": {
+          "type": "string",
+          "default": "ace-vanguard",
+          "enum": ["ace-vanguard", "ace-operator", "ace-cartographer"],
+          "description": "The default ACE persona. Personas control system framing, response posture, and operating style."
+        },
+        "hcode.ace.enableACPBeta": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the ACE Control Plane beta scaffolding for short-lived task workers and deterministic validation."
+        },
+        "hcode.ace.enableMCPBridge": {
+          "type": "boolean",
+          "default": true,
+          "description": "Display and use the local MCP bridge exposed by HCode MCP Server."
+        },
+        "hcode.ace.activeModel": {
+          "type": "string",
+          "default": "",
+          "description": "Optional override for the active provider model. Leave empty to use provider-specific defaults."
+        },
+        "hcode.ace.providerEndpointOverrides": {
+          "type": "object",
+          "default": {},
+          "description": "Optional provider endpoint overrides keyed by provider id. Example: { \"openai\": \"https://api.openai.com\" }."
+        },
+        "hcode.ace.providerModelOverrides": {
+          "type": "object",
+          "default": {},
+          "description": "Optional provider model overrides keyed by provider id. Example: { \"ollama\": \"llama3.2\" }."
+        },
+        "hcode.ace.azureOpenAIDeployment": {
+          "type": "string",
+          "default": "",
+          "description": "Azure OpenAI deployment name used when the active provider is azure-openai."
+        },
+        "hcode.ace.azureOpenAIApiVersion": {
+          "type": "string",
+          "default": "2024-10-21",
+          "description": "Azure OpenAI API version used for ACE runtime requests."
+        },
+        "hcode.ace.requestTimeoutMs": {
+          "type": "number",
+          "default": 45000,
+          "minimum": 5000,
+          "description": "Timeout for ACE provider requests in milliseconds."
+        },
+        "hcode.ace.acpMaxWorkers": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Maximum number of ACP worker tasks dispatched for a single objective."
+        },
+        "hcode.ace.xbowInspiredLoop": {
+          "type": "boolean",
+          "default": true,
+          "description": "Display the XBow-inspired short-lived worker loop and deterministic validation pattern in the ACE dashboard."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p tsconfig.json",
+    "watch": "tsc -watch -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "*",
+    "@types/node": "*",
+    "@types/vscode": "*"
+  }
+}

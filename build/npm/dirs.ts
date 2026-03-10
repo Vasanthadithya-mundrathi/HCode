@@ -51,6 +51,15 @@ export const dirs = [
 	'extensions/vscode-colorize-tests',
 	'extensions/vscode-colorize-perf-tests',
 	'extensions/vscode-test-resolver',
+
+	// HCode security extensions
+	'extensions/hcode-ace',
+	'extensions/hcode-bugbounty',
+	'extensions/hcode-devices',
+	'extensions/hcode-tools',
+	'extensions/hcode-skills',
+	'extensions/hcode-ctf',
+	'extensions/hcode-mcp-server',
 	'remote',
 	'remote/web',
 	'test/automation',

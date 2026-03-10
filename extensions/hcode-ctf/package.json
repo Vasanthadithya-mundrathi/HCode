@@ -1,0 +1,66 @@
+{
+  "name": "hcode-ctf",
+  "displayName": "HCode CTF Toolkit",
+  "description": "CTF utilities: flag highlighter, encoder/decoder, hash identifier, cipher tools.",
+  "version": "1.0.0",
+  "publisher": "hcode",
+  "license": "MIT",
+  "engines": { "vscode": "*" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "hcode.ctf.decode",
+        "title": "HCode CTF: Decode / Encode Selection",
+        "category": "HCode CTF"
+      },
+      {
+        "command": "hcode.ctf.hashIdentify",
+        "title": "HCode CTF: Identify Hash",
+        "category": "HCode CTF"
+      },
+      {
+        "command": "hcode.ctf.xorBrute",
+        "title": "HCode CTF: XOR Brute-Force",
+        "category": "HCode CTF"
+      },
+      {
+        "command": "hcode.ctf.openPanel",
+        "title": "HCode CTF: Open Decoder Panel",
+        "category": "HCode CTF",
+        "icon": "$(symbol-key)"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "hcode.ctf.decode",
+          "when": "editorHasSelection",
+          "group": "hcode@1"
+        },
+        {
+          "command": "hcode.ctf.hashIdentify",
+          "when": "editorHasSelection",
+          "group": "hcode@2"
+        }
+      ],
+      "commandPalette": [
+        { "command": "hcode.ctf.decode" },
+        { "command": "hcode.ctf.hashIdentify" },
+        { "command": "hcode.ctf.xorBrute" },
+        { "command": "hcode.ctf.openPanel" }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p tsconfig.json",
+    "watch": "tsc -watch -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "*",
+    "@types/node": "*",
+    "@types/vscode": "*"
+  }
+}

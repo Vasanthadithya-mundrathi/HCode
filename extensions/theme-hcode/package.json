@@ -1,0 +1,22 @@
+{
+  "name": "theme-hcode",
+  "displayName": "HCode Dark",
+  "description": "A dark cybersecurity-focused theme for HCode.",
+  "version": "1.0.0",
+  "publisher": "hcode",
+  "license": "MIT",
+  "engines": {
+    "vscode": "*"
+  },
+  "categories": ["Themes"],
+  "contributes": {
+    "themes": [
+      {
+        "id": "HCode Dark",
+        "label": "HCode Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/hcode-color-theme.json"
+      }
+    ]
+  }
+}

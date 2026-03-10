@@ -1,0 +1,13 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ACE icon">
+  <defs>
+    <linearGradient id="acePulse" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#30f2c5"/>
+      <stop offset="0.5" stop-color="#00b3ff"/>
+      <stop offset="1" stop-color="#7f5cff"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="48" height="48" rx="14" fill="#081119" stroke="url(#acePulse)" stroke-width="3"/>
+  <path d="M20 40 31 20l11 20" fill="none" stroke="url(#acePulse)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M25 32h14" fill="none" stroke="url(#acePulse)" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="48" cy="18" r="4" fill="#30f2c5"/>
+</svg>

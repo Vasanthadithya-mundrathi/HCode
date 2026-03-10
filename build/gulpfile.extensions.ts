@@ -93,6 +93,18 @@ const compilations = [
 	'extensions/vscode-colorize-perf-tests/tsconfig.json',
 	'extensions/vscode-test-resolver/tsconfig.json',
 
+	// HCode security extensions
+	'extensions/hcode-ace/tsconfig.json',
+	'extensions/hcode-bugbounty/tsconfig.json',
+	'extensions/hcode-devices/tsconfig.json',
+	'extensions/hcode-tools/tsconfig.json',
+	'extensions/hcode-skills/tsconfig.json',
+	'extensions/hcode-ctf/tsconfig.json',
+	'extensions/hcode-network/tsconfig.json',
+	'extensions/hcode-recon/tsconfig.json',
+	'extensions/hcode-binary/tsconfig.json',
+	'extensions/hcode-mcp-server/tsconfig.json',
+
 	'.vscode/extensions/vscode-selfhost-test-provider/tsconfig.json',
 	'.vscode/extensions/vscode-selfhost-import-aid/tsconfig.json',
 	'.vscode/extensions/vscode-extras/tsconfig.json',

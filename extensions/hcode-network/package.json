@@ -1,0 +1,73 @@
+{
+  "name": "hcode-network",
+  "displayName": "HCode Network Tools",
+  "description": "HTTP request builder, response diffing, proxy configurator, and cookie jar for web security testing.",
+  "version": "1.0.0",
+  "publisher": "hcode",
+  "license": "MIT",
+  "engines": { "vscode": "*" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "hcode.network.openRepeater", "title": "HCode Network: Open HTTP Repeater", "category": "HCode Network", "icon": "$(globe)" },
+      { "command": "hcode.network.setProxy", "title": "HCode Network: Set HTTP Proxy", "category": "HCode Network" },
+      { "command": "hcode.network.clearProxy", "title": "HCode Network: Clear HTTP Proxy", "category": "HCode Network" },
+      { "command": "hcode.network.diffResponses", "title": "HCode Network: Diff Two Responses", "category": "HCode Network" }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "hcode-network",
+          "title": "HCode Network",
+          "icon": "$(broadcast)"
+        }
+      ]
+    },
+    "views": {
+      "hcode-network": [
+        {
+          "type": "webview",
+          "id": "hcode.network.repeater",
+          "name": "HTTP Repeater",
+          "icon": "$(globe)"
+        },
+        {
+          "id": "hcode.network.history",
+          "name": "Request History",
+          "icon": "$(history)"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "HCode Network",
+      "properties": {
+        "hcode.network.proxy": {
+          "type": "string",
+          "default": "",
+          "description": "HTTP/HTTPS proxy URL (e.g. http://127.0.0.1:8080 for Burp Suite)"
+        },
+        "hcode.network.followRedirects": {
+          "type": "boolean",
+          "default": true,
+          "description": "Follow HTTP redirects in the HTTP Repeater"
+        },
+        "hcode.network.sslVerify": {
+          "type": "boolean",
+          "default": true,
+          "description": "Verify SSL certificates (disable for testing self-signed certs)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p tsconfig.json",
+    "watch": "tsc -watch -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "*",
+    "@types/node": "*",
+    "@types/vscode": "*"
+  }
+}
