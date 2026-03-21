@@ -6,9 +6,12 @@ HCode is a security-focused IDE built on top of Code - OSS. It packages offensiv
 
 - Unified HCode sidebar for security workflows.
 - Local and remote tool execution via HCode Tools and HCode Devices.
+- Cross-extension context bus for compound workflows and event handoff.
 - Bug bounty program and finding lifecycle management.
 - Skill packs and repeatable playbooks.
-- CTF helper panel for common encoding/decoding and analysis loops.
+- Expanded CTF panel with multi-transform decode/encode, hash ID, and XOR workflows.
+- Recon wrappers for subfinder, httpx, nuclei, nmap, and whois.
+- Network and binary analysis surfaces for protocol and artifact inspection workflows.
 - MCP server bridge for external agent integrations.
 - ACE dashboard for provider routing, personas, and orchestration controls.
 
@@ -52,6 +55,9 @@ npm run watch-extensionsd
 - extensions/hcode-bugbounty
 - extensions/hcode-skills
 - extensions/hcode-ctf
+- extensions/hcode-recon
+- extensions/hcode-network
+- extensions/hcode-binary
 - extensions/hcode-mcp-server
 - extensions/hcode-ace
 - extensions/theme-hcode
