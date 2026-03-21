@@ -68,6 +68,36 @@ const providerDefinitions: readonly AceProviderDefinition[] = [
 		protocols: ['api-key', 'acp']
 	},
 	{
+		id: 'gemini-cli',
+		label: 'Gemini CLI',
+		description: 'Local Gemini CLI adapter for API-keyless runs through an authenticated CLI session.',
+		endpointHint: 'local-cli://gemini',
+		apiKeyLabel: 'Gemini CLI Session',
+		defaultModel: 'gemini-cli-default',
+		capabilities: ['chat', 'reasoning', 'cli-adapter'],
+		protocols: ['cli-adapter', 'acp']
+	},
+	{
+		id: 'qwen-cli',
+		label: 'Qwen CLI',
+		description: 'Local Qwen CLI adapter for API-keyless runs through a local CLI runtime.',
+		endpointHint: 'local-cli://qwen',
+		apiKeyLabel: 'Qwen CLI Session',
+		defaultModel: 'qwen-cli-default',
+		capabilities: ['chat', 'reasoning', 'cli-adapter'],
+		protocols: ['cli-adapter', 'acp']
+	},
+	{
+		id: 'opencode-cli',
+		label: 'OpenCode CLI',
+		description: 'Local OpenCode CLI adapter for API-keyless prompt execution via CLI workflows.',
+		endpointHint: 'local-cli://opencode',
+		apiKeyLabel: 'OpenCode CLI Session',
+		defaultModel: 'opencode-cli-default',
+		capabilities: ['chat', 'reasoning', 'cli-adapter'],
+		protocols: ['cli-adapter', 'acp']
+	},
+	{
 		id: 'ollama',
 		label: 'Ollama',
 		description: 'Local model endpoint for offline routing and lab-grade experimentation.',
@@ -97,7 +127,7 @@ export class AceProviderRegistry {
 		const activeProvider = this.configurationService.getConfiguration('hcode.ace').get<string>('activeProvider', 'openai');
 		const statuses = await Promise.all(providerDefinitions.map(async provider => ({
 			...provider,
-			isConfigured: Boolean(await this.secrets.get(getSecretKey(provider.id))),
+			isConfigured: provider.protocols.includes('api-key') ? Boolean(await this.secrets.get(getSecretKey(provider.id))) : true,
 			isDefault: provider.id === activeProvider
 		})));
 		return statuses;

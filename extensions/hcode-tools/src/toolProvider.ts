@@ -1,13 +1,14 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) HCode. All rights reserved.
- *  Licensed under the MIT License.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
 import { execFile } from 'child_process';
 import { SecurityTool, ToolCategory, TOOLS } from './toolRegistry';
+import { createInstallPlan, launchInstallTerminal } from './installer';
 
-/** Map of toolId → true (installed) | false (not found) */
+/** Map of toolId -> true (installed) | false (not found) */
 type AvailabilityMap = Map<string, boolean>;
 
 const commandLookupBinary = process.platform === 'win32' ? 'where' : 'which';
@@ -94,8 +95,8 @@ export class ToolProvider implements vscode.TreeDataProvider<ToolNode> {
 			);
 			node.description = tool.description;
 			node.tooltip = new vscode.MarkdownString(
-				`**${tool.name}** — ${tool.description}\n\n` +
-				(installed ? '✅ Installed' : `❌ Not found\n\n_Install: \`${tool.installHint}\`_`),
+				`**${tool.name}** - ${tool.description}\n\n` +
+				(installed ? 'Installed' : `Not found\n\n_Install: \`${tool.installHint}\`_`),
 			);
 			node.iconPath = new vscode.ThemeIcon(
 				installed ? 'terminal' : 'close',
@@ -121,7 +122,7 @@ export class ToolProvider implements vscode.TreeDataProvider<ToolNode> {
 	getAvailability(): AvailabilityMap { return this._availability; }
 }
 
-// ── Tree node ──────────────────────────────────────────────────────────────────
+// Tree node
 
 type ToolNodeData =
 	| { kind: 'category'; category: ToolCategory }
@@ -137,15 +138,15 @@ export class ToolNode extends vscode.TreeItem {
 	}
 }
 
-// ── Tool runner ───────────────────────────────────────────────────────────────
+// Tool runner
 
 export async function runTool(tool: SecurityTool): Promise<void> {
 	// 1. Pick a preset or let user type custom args
 	const presetItems = tool.presets.map(p => ({ label: p.label, description: p.description, args: p.args }));
-	presetItems.push({ label: '$(pencil) Custom arguments…', description: 'Enter your own arguments', args: '__custom__' });
+	presetItems.push({ label: '$(pencil) Custom arguments...', description: 'Enter your own arguments', args: '__custom__' });
 
 	const selected = await vscode.window.showQuickPick(presetItems, {
-		placeHolder: `${tool.name} — choose a preset or enter custom args`,
+		placeHolder: `${tool.name} - choose a preset or enter custom args`,
 		matchOnDescription: true,
 	});
 	if (!selected) { return; }
@@ -188,8 +189,45 @@ export async function showInstallHint(tool: SecurityTool): Promise<void> {
 	}
 }
 
+export async function installToolOneClick(
+	tool: SecurityTool,
+	provider: ToolProvider,
+	promptForConfirmation = true,
+): Promise<vscode.Terminal | undefined> {
+	const plan = createInstallPlan(tool);
+	if (!plan) {
+		await showInstallHint(tool);
+		return undefined;
+	}
+
+	if (promptForConfirmation) {
+		const action = await vscode.window.showInformationMessage(
+			`Install ${tool.name} using:\n${plan.installCommand}`,
+			{ modal: true },
+			'Install',
+		);
+		if (action !== 'Install') {
+			return undefined;
+		}
+	}
+
+	const terminal = launchInstallTerminal(tool, plan);
+	vscode.window.showInformationMessage(`HCode: Running one-click install for ${tool.name}.`);
+
+	const closeListener = vscode.window.onDidCloseTerminal(closedTerminal => {
+		if (closedTerminal !== terminal) {
+			return;
+		}
+
+		closeListener.dispose();
+		provider.refresh();
+	});
+
+	return terminal;
+}
+
 /**
- * Headless tool runner for AI agents — accepts structured args directly without any UI prompts.
+ * Headless tool runner for AI agents - accepts structured args directly without any UI prompts.
  * @param toolId The tool id from TOOLS registry (e.g. 'nmap', 'sqlmap')
  * @param args Full argument string, with {target} already substituted
  * @returns The terminal that was opened

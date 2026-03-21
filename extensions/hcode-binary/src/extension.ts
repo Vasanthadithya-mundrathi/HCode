@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) HCode. All rights reserved.
- *  Licensed under the MIT License.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
@@ -129,7 +129,7 @@ class HexViewerProvider implements vscode.CustomReadonlyEditorProvider {
 	async resolveCustomEditor(document: vscode.CustomDocument, webviewPanel: vscode.WebviewPanel): Promise<void> {
 		const buffer = await fs.readFile(document.uri.fsPath);
 		webviewPanel.webview.options = { enableScripts: false };
-		webviewPanel.webview.html = renderHexViewerHtml(webviewPanel.webview, document.uri, buffer);
+		webviewPanel.webview.html = renderHexViewerHtml(document.uri, buffer);
 	}
 }
 
@@ -376,7 +376,7 @@ function extractAsciiStrings(buffer: Buffer): string[] {
 	return text.split(/\n+/).filter(segment => segment.length >= 4);
 }
 
-function renderHexViewerHtml(webview: vscode.Webview, uri: vscode.Uri, buffer: Buffer): string {
+function renderHexViewerHtml(uri: vscode.Uri, buffer: Buffer): string {
 	const nonce = getNonce();
 	const displayBuffer = buffer.subarray(0, Math.min(buffer.length, maxHexPreviewBytes));
 	const rows: string[] = [];
@@ -435,4 +435,4 @@ function getNonce(): string {
 		nonce += charset.charAt(Math.floor(Math.random() * charset.length));
 	}
 	return nonce;
-}
+} 

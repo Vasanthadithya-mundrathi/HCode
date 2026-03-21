@@ -18,13 +18,18 @@
     "onCommand:hcode.ace.openDashboard",
     "onCommand:hcode.ace.configureProviderKey",
     "onCommand:hcode.ace.clearProviderKey",
+    "onCommand:hcode.ace.openModelManager",
     "onCommand:hcode.ace.runPrompt",
     "onCommand:hcode.ace.runObjective",
     "onCommand:hcode.ace.copyMcpUrl",
     "onCommand:hcode.ace.copyAcpSpec",
     "onCommand:hcode.ace.showPersona",
+    "onCommand:hcode.ace.openSettings",
+    "onCommand:hcode.ace.openExtensions",
+    "onCommand:hcode.ace.openTools",
     "onCommand:hcode.ace.startMcpBridge",
-    "onCommand:hcode.ace.stopMcpBridge"
+    "onCommand:hcode.ace.stopMcpBridge",
+    "onCommand:hcode.capabilities.list"
   ],
   "contributes": {
     "views": {
@@ -33,8 +38,7 @@
           "id": "hcode.ace.panel",
           "name": "ACE",
           "icon": "media/ace-icon.svg",
-          "contextualTitle": "ACE Control Plane",
-          "when": "chatIsEnabled"
+          "contextualTitle": "ACE Control Plane"
         }
       ]
     },
@@ -43,116 +47,123 @@
         "command": "hcode.ace.openDashboard",
         "title": "Open ACE Dashboard",
         "category": "HCode ACE",
-        "icon": "media/ace-icon.svg",
-        "enablement": "chatIsEnabled"
+        "icon": "media/ace-icon.svg"
       },
       {
         "command": "hcode.ace.configureProviderKey",
         "title": "Configure Provider API Key",
         "category": "HCode ACE",
-        "icon": "$(key)",
-        "enablement": "chatIsEnabled"
+        "icon": "$(key)"
+      },
+      {
+        "command": "hcode.ace.openModelManager",
+        "title": "Open Model Manager",
+        "category": "HCode ACE",
+        "icon": "$(server-process)"
       },
       {
         "command": "hcode.ace.clearProviderKey",
         "title": "Clear Provider API Key",
         "category": "HCode ACE",
-        "icon": "$(trash)",
-        "enablement": "chatIsEnabled"
+        "icon": "$(trash)"
       },
       {
         "command": "hcode.ace.runPrompt",
         "title": "Run ACE Prompt",
         "category": "HCode ACE",
-        "icon": "$(send)",
-        "enablement": "chatIsEnabled"
+        "icon": "$(send)"
       },
       {
         "command": "hcode.ace.runObjective",
         "title": "Run ACE Objective",
         "category": "HCode ACE",
-        "icon": "$(run-all)",
-        "enablement": "chatIsEnabled"
+        "icon": "$(run-all)"
       },
       {
         "command": "hcode.ace.copyMcpUrl",
         "title": "Copy MCP URL",
         "category": "HCode ACE",
-        "icon": "$(broadcast)",
-        "enablement": "chatIsEnabled"
+        "icon": "$(broadcast)"
       },
       {
         "command": "hcode.ace.copyAcpSpec",
         "title": "Copy ACP Beta Spec",
         "category": "HCode ACE",
-        "icon": "$(hubot)",
-        "enablement": "chatIsEnabled"
+        "icon": "$(hubot)"
       },
       {
         "command": "hcode.ace.showPersona",
         "title": "Show ACE Persona",
         "category": "HCode ACE",
-        "icon": "$(comment-discussion)",
-        "enablement": "chatIsEnabled"
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "hcode.ace.openTools",
+        "title": "Open HCode Tools",
+        "category": "HCode ACE",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "hcode.ace.openSettings",
+        "title": "Open ACE Settings",
+        "category": "HCode ACE",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "hcode.ace.openExtensions",
+        "title": "Open Extensions",
+        "category": "HCode ACE",
+        "icon": "$(extensions)"
       },
       {
         "command": "hcode.ace.startMcpBridge",
         "title": "Start MCP Bridge",
         "category": "HCode ACE",
-        "icon": "$(play)",
-        "enablement": "chatIsEnabled"
+        "icon": "$(play)"
       },
       {
         "command": "hcode.ace.stopMcpBridge",
         "title": "Stop MCP Bridge",
         "category": "HCode ACE",
-        "icon": "$(debug-stop)",
-        "enablement": "chatIsEnabled"
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "hcode.capabilities.list",
+        "title": "List HCode Capabilities",
+        "category": "HCode ACE",
+        "icon": "$(symbol-method)"
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "hcode.ace.configureProviderKey",
-          "when": "view == hcode.ace.panel && chatIsEnabled",
+          "when": "view == hcode.ace.panel",
           "group": "navigation@1"
         },
         {
           "command": "hcode.ace.copyMcpUrl",
-          "when": "view == hcode.ace.panel && chatIsEnabled",
+          "when": "view == hcode.ace.panel",
           "group": "navigation@2"
         },
         {
           "command": "hcode.ace.runPrompt",
-          "when": "view == hcode.ace.panel && chatIsEnabled",
+          "when": "view == hcode.ace.panel",
           "group": "navigation@3"
         }
       ],
       "commandPalette": [
-        {
-          "command": "hcode.ace.openDashboard",
-          "when": "chatIsEnabled"
-        },
-        {
-          "command": "hcode.ace.configureProviderKey",
-          "when": "chatIsEnabled"
-        },
-        {
-          "command": "hcode.ace.copyAcpSpec",
-          "when": "chatIsEnabled"
-        },
-        {
-          "command": "hcode.ace.runPrompt",
-          "when": "chatIsEnabled"
-        },
-        {
-          "command": "hcode.ace.runObjective",
-          "when": "chatIsEnabled"
-        },
-        {
-          "command": "hcode.ace.showPersona",
-          "when": "chatIsEnabled"
-        }
+        { "command": "hcode.ace.openDashboard" },
+        { "command": "hcode.ace.configureProviderKey" },
+        { "command": "hcode.ace.openModelManager" },
+        { "command": "hcode.ace.copyAcpSpec" },
+        { "command": "hcode.ace.runPrompt" },
+        { "command": "hcode.ace.runObjective" },
+        { "command": "hcode.ace.showPersona" },
+        { "command": "hcode.ace.openTools" },
+        { "command": "hcode.ace.openSettings" },
+        { "command": "hcode.ace.openExtensions" },
+        { "command": "hcode.capabilities.list" }
       ]
     },
     "configuration": {
@@ -161,7 +172,7 @@
         "hcode.ace.activeProvider": {
           "type": "string",
           "default": "openai",
-          "enum": ["openai", "anthropic", "google-gemini", "openrouter", "ollama", "azure-openai", "qwen-compatible"],
+          "enum": ["openai", "anthropic", "google-gemini", "openrouter", "ollama", "azure-openai", "qwen-compatible", "gemini-cli", "qwen-cli", "opencode-cli"],
           "description": "The default ACE model provider used by the control plane. API keys are stored in VS Code secret storage, not in settings."
         },
         "hcode.ace.defaultPersona": {
@@ -195,6 +206,27 @@
           "default": {},
           "description": "Optional provider model overrides keyed by provider id. Example: { \"ollama\": \"llama3.2\" }."
         },
+        "hcode.ace.cliAdapters": {
+          "type": "object",
+          "default": {
+            "gemini-cli": {
+              "command": "gemini",
+              "args": ["--prompt", "{prompt}"],
+              "passViaStdin": false
+            },
+            "qwen-cli": {
+              "command": "qwen",
+              "args": ["--prompt", "{prompt}"],
+              "passViaStdin": false
+            },
+            "opencode-cli": {
+              "command": "opencode",
+              "args": ["--prompt", "{prompt}"],
+              "passViaStdin": false
+            }
+          },
+          "description": "CLI adapter configuration keyed by provider id (gemini-cli, qwen-cli, opencode-cli). Use {prompt} and {systemPrompt} placeholders in args."
+        },
         "hcode.ace.azureOpenAIDeployment": {
           "type": "string",
           "default": "",
@@ -210,6 +242,18 @@
           "default": 45000,
           "minimum": 5000,
           "description": "Timeout for ACE provider requests in milliseconds."
+        },
+        "hcode.ace.kaliHost": {
+          "type": "string",
+          "default": "192.168.64.6",
+          "description": "Kali host used for ACE integration reachability status checks."
+        },
+        "hcode.ace.kaliSshPort": {
+          "type": "number",
+          "default": 22,
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "SSH port used for Kali reachability status checks in ACE dashboard."
         },
         "hcode.ace.acpMaxWorkers": {
           "type": "number",

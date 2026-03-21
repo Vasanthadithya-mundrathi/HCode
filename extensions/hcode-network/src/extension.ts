@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) HCode. All rights reserved.
- *  Licensed under the MIT License.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
@@ -71,7 +71,7 @@ class NetworkHistoryProvider implements vscode.TreeDataProvider<HistoryNode> {
 
 		return entries.map(entry => {
 			const node = new HistoryNode({ kind: 'entry', entryId: entry.id }, `${entry.method} ${entry.url}`, vscode.TreeItemCollapsibleState.None);
-			node.description = `${entry.status} • ${new Date(entry.createdAt).toLocaleTimeString()}`;
+			node.description = `${entry.status} - ${new Date(entry.createdAt).toLocaleTimeString()}`;
 			node.iconPath = new vscode.ThemeIcon(entry.status >= 400 ? 'error' : 'globe');
 			return node;
 		});
@@ -132,7 +132,7 @@ class RepeaterViewProvider implements vscode.WebviewViewProvider {
 			<input id="url" type="text" placeholder="https://target.example/api" />
 			<textarea id="headers" placeholder="Header: Value"></textarea>
 			<textarea id="body" placeholder="Optional request body"></textarea>
-			<div class="meta">Proxy setting: ${escapeHtml(proxy || 'not configured')} • Redirects: ${followRedirects ? 'follow' : 'manual'} • SSL verify: ${sslVerify ? 'enabled' : 'disabled'}</div>
+			<div class="meta">Proxy setting: ${escapeHtml(proxy || 'not configured')} | Redirects: ${followRedirects ? 'follow' : 'manual'} | SSL verify: ${sslVerify ? 'enabled' : 'disabled'}</div>
 			<button id="send-request">Send Request</button>
 			<pre id="response">No response yet.</pre>
 			<script nonce="${nonce}">

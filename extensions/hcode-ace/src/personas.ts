@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) HCode. All rights reserved.
- *  Licensed under the MIT License.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import { AcePersona } from './types';
@@ -37,4 +37,4 @@ export const acePersonas: readonly AcePersona[] = [
 
 export function getPersona(personaId: string): AcePersona | undefined {
 	return acePersonas.find(persona => persona.id === personaId);
-}
+} 

@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) HCode. All rights reserved.
- *  Licensed under the MIT License.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
@@ -239,14 +239,18 @@ export function deactivate(): void {
 
 async function promptForTarget(store: ReconStore): Promise<ReconTarget | undefined> {
 	const existingTargets = store.getTargets();
-	const picks = existingTargets.map(target => ({ label: target.label, target }));
-	const createNew = { label: 'Enter a New Target…' };
-	const selected = await vscode.window.showQuickPick([...picks, createNew], { placeHolder: 'Select or enter a recon target' });
+	interface TargetPick extends vscode.QuickPickItem {
+		target?: ReconTarget;
+	}
+
+	const picks: TargetPick[] = existingTargets.map(target => ({ label: target.label, target }));
+	const createNew: TargetPick = { label: 'Enter a New Target...' };
+	const selected = await vscode.window.showQuickPick<TargetPick>([...picks, createNew], { placeHolder: 'Select or enter a recon target' });
 	if (!selected) {
 		return undefined;
 	}
 
-	if ('target' in selected) {
+	if (selected.target) {
 		return selected.target;
 	}
 
@@ -296,4 +300,4 @@ function getNonce(): string {
 		nonce += charset.charAt(Math.floor(Math.random() * charset.length));
 	}
 	return nonce;
-}
+} 

@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) Vasantha Adithya. All rights reserved.
- *  Licensed under the MIT License.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 /**
@@ -10,7 +10,7 @@
  * In practice the shapes are exactly as defined below.
  */
 
-// ─── Bug Bounty ──────────────────────────────────────────────────────────────
+// Bug Bounty
 
 export interface BugBountyProgram {
 	id: string;
@@ -59,7 +59,7 @@ export interface IHCodeBugBountyAPI {
 	exportMarkdownReport(programId: string): string;
 }
 
-// ─── Devices ─────────────────────────────────────────────────────────────────
+// Devices
 
 export interface SSHDevice {
 	id: string;
@@ -84,7 +84,7 @@ export interface IHCodeDevicesAPI {
 	runCommand(deviceId: string, command: string): unknown;
 }
 
-// ─── Tools ───────────────────────────────────────────────────────────────────
+// Tools
 
 export interface SecurityTool {
 	id: string;
@@ -100,11 +100,12 @@ export interface SecurityTool {
 export interface IHCodeToolsAPI {
 	tools: SecurityTool[];
 	runToolHeadless(toolId: string, args: string): unknown;
+	installToolHeadless(toolId: string): Promise<unknown>;
 	refreshAvailability(): Promise<Map<string, boolean>>;
 	getAvailability(): Map<string, boolean>;
 }
 
-// ─── Skills ──────────────────────────────────────────────────────────────────
+// Skills
 
 export interface IHCodeSkillsAPI {
 	listSkills(): Array<{
@@ -171,6 +172,7 @@ export function isHCodeToolsAPI(value: unknown): value is IHCodeToolsAPI {
 
 	return Array.isArray(value.tools)
 		&& hasFunction(value, 'runToolHeadless')
+		&& hasFunction(value, 'installToolHeadless')
 		&& hasFunction(value, 'refreshAvailability')
 		&& hasFunction(value, 'getAvailability');
 }

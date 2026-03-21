@@ -4,12 +4,17 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
+import { execFile } from 'child_process';
+import * as net from 'net';
+import { promisify } from 'util';
 import { AceAcpRuntime } from './acpRuntime';
 import { acePersonas, getPersona } from './personas';
 import { AceProviderRegistry } from './providerRegistry';
 import { AceProviderRuntime } from './providerRuntime';
 import { aceSkillPacks } from './skillPacks';
-import { AceAcpRunResult, AceDashboardModel, AceMcpStatus, AceProviderInvocationResult } from './types';
+import { AceAcpRunResult, AceCapability, AceCapabilityModel, AceDashboardModel, AceMcpStatus, AceProviderInvocationResult } from './types';
+
+const execFileAsync = promisify(execFile);
 
 interface HCodeMCPServerApi {
 	startServer(): Promise<void>;
@@ -21,6 +26,7 @@ interface HCodeMCPServerApi {
 export interface HCodeACEApi {
 	getDashboardModel(): Promise<AceDashboardModel>;
 	getAcpSpec(): Promise<string>;
+	getCapabilities(): Promise<AceCapabilityModel>;
 }
 
 export function activate(context: vscode.ExtensionContext): HCodeACEApi {
@@ -37,6 +43,7 @@ export function activate(context: vscode.ExtensionContext): HCodeACEApi {
 		}),
 		vscode.commands.registerCommand('hcode.ace.openDashboard', async () => {
 			await vscode.commands.executeCommand('workbench.view.extension.hcode');
+			await vscode.commands.executeCommand('hcode.ace.panel.focus');
 		}),
 		vscode.commands.registerCommand('hcode.ace.configureProviderKey', async () => {
 			await configureProviderKey(providerRegistry);
@@ -70,6 +77,20 @@ export function activate(context: vscode.ExtensionContext): HCodeACEApi {
 			});
 			await vscode.window.showTextDocument(document, { preview: false });
 		}),
+		vscode.commands.registerCommand('hcode.ace.openModelManager', async () => {
+			await openModelManager(providerRegistry);
+			dashboardProvider.refresh();
+		}),
+		vscode.commands.registerCommand('hcode.ace.openSettings', async () => {
+			await vscode.commands.executeCommand('workbench.action.openSettings', 'hcode.ace');
+		}),
+		vscode.commands.registerCommand('hcode.ace.openExtensions', async () => {
+			await vscode.commands.executeCommand('workbench.view.extensions');
+		}),
+		vscode.commands.registerCommand('hcode.ace.openTools', async () => {
+			await vscode.commands.executeCommand('workbench.view.extension.hcode');
+			await vscode.commands.executeCommand('hcode.tools.refresh');
+		}),
 		vscode.commands.registerCommand('hcode.ace.startMcpBridge', async () => {
 			const mcpApi = await getMcpApi();
 			if (mcpApi) {
@@ -87,15 +108,16 @@ export function activate(context: vscode.ExtensionContext): HCodeACEApi {
 				await vscode.commands.executeCommand('hcode.mcp.stopServer');
 			}
 			dashboardProvider.refresh();
-		})
+		}),
+		vscode.commands.registerCommand('hcode.capabilities.list', async () => getCapabilityModel())
 	);
 
 	return {
 		getDashboardModel: () => getDashboardModel(providerRegistry, providerRuntime),
-		getAcpSpec: async () => buildAcpSpec()
+		getAcpSpec: async () => buildAcpSpec(),
+		getCapabilities: () => getCapabilityModel(),
 	};
 }
-
 export function deactivate(): void {
 	// no-op
 }
@@ -143,6 +165,18 @@ class AceDashboardViewProvider implements vscode.WebviewViewProvider {
 				case 'showPersona':
 					await vscode.commands.executeCommand('hcode.ace.showPersona');
 					break;
+				case 'openModelManager':
+					await vscode.commands.executeCommand('hcode.ace.openModelManager');
+					break;
+				case 'openSettings':
+					await vscode.commands.executeCommand('hcode.ace.openSettings');
+					break;
+				case 'openExtensions':
+					await vscode.commands.executeCommand('hcode.ace.openExtensions');
+					break;
+				case 'openTools':
+					await vscode.commands.executeCommand('hcode.ace.openTools');
+					break;
 			}
 		});
 
@@ -184,6 +218,11 @@ async function configureProviderKey(providerRegistry: AceProviderRegistry): Prom
 
 	const provider = providerRegistry.getProvider(pick.providerId);
 	if (!provider) {
+		return;
+	}
+
+	if (!provider.protocols.includes('api-key')) {
+		void vscode.window.showInformationMessage(`ACE: ${provider.label} uses local CLI authentication/session. Configure hcode.ace.cliAdapters if needed.`);
 		return;
 	}
 
@@ -296,6 +335,22 @@ async function getDashboardModel(providerRegistry: AceProviderRegistry, provider
 		activeModel,
 		defaultPersonaId: aceConfiguration.get<string>('defaultPersona', 'ace-vanguard'),
 		providers: await providerRegistry.getStatuses(),
+		cliDetected: await detectAvailableCliAdapters(),
+		kaliStatus: {
+			host: aceConfiguration.get<string>('kaliHost', '192.168.64.6'),
+			port: aceConfiguration.get<number>('kaliSshPort', 22),
+			reachable: await isTcpReachable(
+				aceConfiguration.get<string>('kaliHost', '192.168.64.6'),
+				aceConfiguration.get<number>('kaliSshPort', 22),
+				1500,
+			),
+		},
+		integrationExtensions: {
+			mcp: Boolean(vscode.extensions.getExtension('hcode.hcode-mcp-server')),
+			tools: Boolean(vscode.extensions.getExtension('hcode.hcode-tools')),
+			skills: Boolean(vscode.extensions.getExtension('hcode.hcode-skills')),
+			devices: Boolean(vscode.extensions.getExtension('hcode.hcode-devices')),
+		},
 		personas: [...acePersonas],
 		skillPacks: [...aceSkillPacks],
 		mcpStatus: await getMcpStatus(),
@@ -304,6 +359,136 @@ async function getDashboardModel(providerRegistry: AceProviderRegistry, provider
 		acpMaxWorkers: aceConfiguration.get<number>('acpMaxWorkers', 3),
 		xbowInspiredLoop: aceConfiguration.get<boolean>('xbowInspiredLoop', true)
 	};
+}
+
+async function openModelManager(providerRegistry: AceProviderRegistry): Promise<void> {
+	const providerStatuses = await providerRegistry.getStatuses();
+	const selected = await vscode.window.showQuickPick(providerStatuses.map(provider => ({
+		label: provider.label,
+		detail: `${provider.id} | default model: ${provider.defaultModel}`,
+		description: provider.isConfigured ? 'Ready' : 'Needs API key',
+		provider,
+	})), {
+		placeHolder: 'Select a provider to manage',
+		matchOnDescription: true,
+		matchOnDetail: true,
+	});
+
+	if (!selected) {
+		return;
+	}
+
+	const provider = selected.provider;
+	const actions: Array<{ label: string; id: string }> = [
+		{ label: 'Set as Active Provider', id: 'setActiveProvider' },
+		{ label: 'Set Model Override', id: 'setModel' },
+		{ label: 'Clear Model Override', id: 'clearModel' },
+	];
+
+	if (provider.protocols.includes('api-key')) {
+		actions.push({ label: 'Configure API Key', id: 'setKey' });
+		actions.push({ label: 'Clear API Key', id: 'clearKey' });
+	}
+
+	const action = await vscode.window.showQuickPick(actions, { placeHolder: `Manage ${provider.label}` });
+	if (!action) {
+		return;
+	}
+
+	const aceConfiguration = vscode.workspace.getConfiguration('hcode.ace');
+	if (action.id === 'setActiveProvider') {
+		await aceConfiguration.update('activeProvider', provider.id, vscode.ConfigurationTarget.Workspace);
+		void vscode.window.showInformationMessage(`ACE: Active provider set to ${provider.label}.`);
+		return;
+	}
+
+	if (action.id === 'setModel') {
+		const overrides = aceConfiguration.get<Record<string, string>>('providerModelOverrides', {});
+		const model = await vscode.window.showInputBox({
+			prompt: `Set model override for ${provider.label}`,
+			value: overrides[provider.id] ?? provider.defaultModel,
+			ignoreFocusOut: true,
+			validateInput: value => value.trim() ? undefined : 'Model is required',
+		});
+		if (!model) {
+			return;
+		}
+		overrides[provider.id] = model.trim();
+		await aceConfiguration.update('providerModelOverrides', overrides, vscode.ConfigurationTarget.Workspace);
+		void vscode.window.showInformationMessage(`ACE: Model override saved for ${provider.label}.`);
+		return;
+	}
+
+	if (action.id === 'clearModel') {
+		const overrides = { ...aceConfiguration.get<Record<string, string>>('providerModelOverrides', {}) };
+		delete overrides[provider.id];
+		await aceConfiguration.update('providerModelOverrides', overrides, vscode.ConfigurationTarget.Workspace);
+		void vscode.window.showInformationMessage(`ACE: Cleared model override for ${provider.label}.`);
+		return;
+	}
+
+	if (action.id === 'setKey') {
+		const apiKey = await vscode.window.showInputBox({
+			prompt: provider.apiKeyLabel,
+			placeHolder: provider.endpointHint,
+			ignoreFocusOut: true,
+			password: true,
+			validateInput: value => value.trim() ? undefined : 'API key is required',
+		});
+		if (!apiKey) {
+			return;
+		}
+		await providerRegistry.setApiKey(provider.id, apiKey.trim());
+		void vscode.window.showInformationMessage(`ACE: Stored secret for ${provider.label}.`);
+		return;
+	}
+
+	if (action.id === 'clearKey') {
+		await providerRegistry.clearApiKey(provider.id);
+		void vscode.window.showInformationMessage(`ACE: Cleared secret for ${provider.label}.`);
+	}
+}
+
+async function detectAvailableCliAdapters(): Promise<string[]> {
+	const candidates = ['gemini', 'qwen', 'opencode'];
+	const detected: string[] = [];
+	for (const candidate of candidates) {
+		if (await isCommandAvailable(candidate)) {
+			detected.push(candidate);
+		}
+	}
+	return detected;
+}
+
+async function isCommandAvailable(command: string): Promise<boolean> {
+	const lookup = process.platform === 'win32' ? 'where' : 'which';
+	try {
+		await execFileAsync(lookup, [command]);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+async function isTcpReachable(host: string, port: number, timeoutMs: number): Promise<boolean> {
+	return new Promise(resolve => {
+		const socket = net.createConnection({ host, port });
+		let settled = false;
+
+		const finalize = (value: boolean) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			socket.destroy();
+			resolve(value);
+		};
+
+		socket.setTimeout(timeoutMs);
+		socket.once('connect', () => finalize(true));
+		socket.once('timeout', () => finalize(false));
+		socket.once('error', () => finalize(false));
+	});
 }
 
 function getMcpUrl(): string {
@@ -382,6 +567,46 @@ function buildAcpSpec(): string {
 		safety: ['explicit scope policy', 'bounded task chains', 'human review before report promotion'],
 		xbowInspiredLoop: ['decompose objective', 'spawn narrow workers', 'validate independently', 'promote surviving evidence']
 	}, null, 2);
+}
+
+async function getCapabilityModel(): Promise<AceCapabilityModel> {
+	const knownCommands = new Set(await vscode.commands.getCommands(true));
+	const capabilitySeeds: Array<Omit<AceCapability, 'available'>> = [
+		{ id: 'ace.prompt', label: 'ACE Prompt Execution', domain: 'ace', command: 'hcode.ace.runPrompt' },
+		{ id: 'ace.objective', label: 'ACE Objective Runner', domain: 'ace', command: 'hcode.ace.runObjective' },
+		{ id: 'mcp.start', label: 'MCP Server Start', domain: 'mcp', command: 'hcode.mcp.startServer', requiresExtension: 'hcode.hcode-mcp-server' },
+		{ id: 'mcp.stop', label: 'MCP Server Stop', domain: 'mcp', command: 'hcode.mcp.stopServer', requiresExtension: 'hcode.hcode-mcp-server' },
+		{ id: 'tools.run', label: 'Security Tool Runner', domain: 'tools', command: 'hcode.tools.run', requiresExtension: 'hcode.hcode-tools' },
+		{ id: 'tools.install', label: 'One-Click Tool Install', domain: 'tools', command: 'hcode.tools.install', requiresExtension: 'hcode.hcode-tools' },
+		{ id: 'skills.run', label: 'Skill Pack Runner', domain: 'skills', command: 'hcode.skills.run', requiresExtension: 'hcode.hcode-skills' },
+		{ id: 'devices.command', label: 'Remote Device Command', domain: 'devices', command: 'hcode.devices.runCommand', requiresExtension: 'hcode.hcode-devices' },
+		{ id: 'bugbounty.addFinding', label: 'Bug Bounty Finding Capture', domain: 'bugbounty', command: 'hcode.bugbounty.addFinding', requiresExtension: 'hcode.hcode-bugbounty' },
+	];
+
+	const resolved = capabilitySeeds.map(capability => {
+		const extensionMissing = capability.requiresExtension && !vscode.extensions.getExtension(capability.requiresExtension);
+		const commandMissing = !knownCommands.has(capability.command);
+		const available = !extensionMissing && !commandMissing;
+
+		let reason: string | undefined;
+		if (extensionMissing) {
+			reason = `Missing extension: ${capability.requiresExtension}`;
+		} else if (commandMissing) {
+			reason = `Command not registered: ${capability.command}`;
+		}
+
+		return {
+			...capability,
+			available,
+			reason,
+		};
+	});
+
+	return {
+		apiVersion: '1.0',
+		generatedAt: new Date().toISOString(),
+		capabilities: resolved,
+	};
 }
 
 function renderInvocationMarkdown(prompt: string, personaId: string, result: AceProviderInvocationResult): string {
@@ -488,28 +713,23 @@ function getDashboardHtml(webview: vscode.Webview, logoUri: vscode.Uri, dashboar
 	<title>ACE Dashboard</title>
 	<style nonce="${nonce}">
 		:root {
-			color-scheme: dark;
-			--bg: #081018;
-			--panel: #0d1620;
-			--panel-alt: #121d28;
-			--border: #203040;
-			--text: #ebf6ff;
-			--muted: #98adbf;
-			--accent-a: #30f2c5;
-			--accent-b: #00b3ff;
-			--accent-c: #8c62ff;
-			--ok: #29d17d;
-			--warn: #ffc95c;
+			--bg: var(--vscode-sideBar-background);
+			--panel: var(--vscode-editorWidget-background);
+			--panel-alt: var(--vscode-input-background);
+			--border: var(--vscode-panel-border);
+			--text: var(--vscode-foreground);
+			--muted: var(--vscode-descriptionForeground);
+			--accent-a: var(--vscode-button-background);
+			--accent-b: var(--vscode-button-hoverBackground);
+			--ok: var(--vscode-testing-iconPassed, #2ea043);
+			--warn: var(--vscode-testing-iconQueued, #bf8700);
 		}
 
 		body {
 			margin: 0;
 			padding: 16px;
 			font-family: var(--vscode-font-family);
-			background:
-				radial-gradient(circle at top right, rgba(48, 242, 197, 0.14), transparent 28%),
-				radial-gradient(circle at bottom left, rgba(140, 98, 255, 0.14), transparent 26%),
-				var(--bg);
+			background: var(--bg);
 			color: var(--text);
 		}
 
@@ -521,10 +741,10 @@ function getDashboardHtml(webview: vscode.Webview, logoUri: vscode.Uri, dashboar
 		.hero,
 		.card,
 		.section {
-			background: rgba(13, 22, 32, 0.92);
+			background: var(--panel);
 			border: 1px solid var(--border);
-			border-radius: 18px;
-			box-shadow: 0 18px 36px rgba(0, 0, 0, 0.18);
+			border-radius: 10px;
+			box-shadow: none;
 		}
 
 		.hero {
@@ -592,7 +812,7 @@ function getDashboardHtml(webview: vscode.Webview, logoUri: vscode.Uri, dashboar
 			padding: 4px 8px;
 			border-radius: 999px;
 			font-size: 12px;
-			border: 1px solid rgba(255, 255, 255, 0.08);
+			border: 1px solid var(--border);
 			background: var(--panel-alt);
 		}
 
@@ -605,24 +825,32 @@ function getDashboardHtml(webview: vscode.Webview, logoUri: vscode.Uri, dashboar
 		}
 
 		.provider.default {
-			border-color: rgba(48, 242, 197, 0.4);
+			border-color: var(--vscode-focusBorder);
 		}
 
 		button {
 			border: 0;
-			border-radius: 12px;
+			border-radius: 6px;
 			padding: 10px 12px;
 			font: inherit;
 			font-weight: 600;
 			cursor: pointer;
-			color: #06131c;
-			background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+			color: var(--vscode-button-foreground);
+			background: var(--accent-a);
+		}
+
+		button:hover {
+			background: var(--accent-b);
 		}
 
 		button.secondary {
-			background: var(--panel-alt);
-			color: var(--text);
-			border: 1px solid var(--border);
+			background: var(--vscode-button-secondaryBackground);
+			color: var(--vscode-button-secondaryForeground);
+			border: 1px solid var(--vscode-button-border, var(--border));
+		}
+
+		button.secondary:hover {
+			background: var(--vscode-button-secondaryHoverBackground);
 		}
 
 		.protocol-row {
@@ -635,9 +863,9 @@ function getDashboardHtml(webview: vscode.Webview, logoUri: vscode.Uri, dashboar
 			word-break: break-word;
 			font-family: var(--vscode-editor-font-family, monospace);
 			font-size: 12px;
-			background: #0a1219;
+			background: var(--vscode-textCodeBlock-background);
 			padding: 12px;
-			border-radius: 12px;
+			border-radius: 6px;
 			border: 1px solid var(--border);
 			color: var(--text);
 		}
@@ -651,9 +879,35 @@ function getDashboardHtml(webview: vscode.Webview, logoUri: vscode.Uri, dashboar
 			<p>${escapeHtml(persona.tagline)}. ACE is HCode's native control plane for agent orchestration, provider routing, skill packs, and protocol bridges.</p>
 			<div class="hero-actions">
 				<button id="configure-provider">Configure Provider Key</button>
+				<button id="open-model-manager">Model Manager</button>
 				<button id="run-prompt">Run Prompt</button>
 				<button id="run-objective">Run Objective</button>
 				<button id="show-persona" class="secondary">Show Persona Prompt</button>
+				<button id="open-tools" class="secondary">Open Tools</button>
+				<button id="open-settings" class="secondary">Open Settings</button>
+				<button id="open-extensions" class="secondary">Open Extensions</button>
+			</div>
+		</section>
+
+		<section class="section" aria-label="ACE integration status">
+			<h2>Integration Status</h2>
+			<div class="grid">
+				<div class="card">
+					<div class="card-title-row"><h3>MCP Bridge</h3><span class="pill ${dashboard.mcpStatus.isRunning ? 'configured' : 'pending'}">${dashboard.mcpStatus.isRunning ? 'Live' : 'Offline'}</span></div>
+					<p>${escapeHtml(dashboard.mcpStatus.url)}</p>
+				</div>
+				<div class="card">
+					<div class="card-title-row"><h3>CLI Adapters</h3><span class="pill ${dashboard.cliDetected.length ? 'configured' : 'pending'}">${dashboard.cliDetected.length ? 'Detected' : 'Missing'}</span></div>
+					<p>${escapeHtml(dashboard.cliDetected.length ? dashboard.cliDetected.join(', ') : 'No CLI adapters detected.')}</p>
+				</div>
+				<div class="card">
+					<div class="card-title-row"><h3>Kali SSH</h3><span class="pill ${dashboard.kaliStatus.reachable ? 'configured' : 'pending'}">${dashboard.kaliStatus.reachable ? 'Reachable' : 'Unreachable'}</span></div>
+					<p>${escapeHtml(`${dashboard.kaliStatus.host}:${dashboard.kaliStatus.port}`)}</p>
+				</div>
+				<div class="card">
+					<div class="card-title-row"><h3>HCode Integrations</h3><span class="pill ${(dashboard.integrationExtensions.mcp && dashboard.integrationExtensions.tools && dashboard.integrationExtensions.skills && dashboard.integrationExtensions.devices) ? 'configured' : 'pending'}">Extension Checks</span></div>
+					<p>MCP: ${dashboard.integrationExtensions.mcp ? 'OK' : 'Missing'} | Tools: ${dashboard.integrationExtensions.tools ? 'OK' : 'Missing'} | Skills: ${dashboard.integrationExtensions.skills ? 'OK' : 'Missing'} | Devices: ${dashboard.integrationExtensions.devices ? 'OK' : 'Missing'}</p>
+				</div>
 			</div>
 		</section>
 
@@ -699,6 +953,7 @@ function getDashboardHtml(webview: vscode.Webview, logoUri: vscode.Uri, dashboar
 	<script nonce="${nonce}">
 		const vscode = acquireVsCodeApi();
 		document.getElementById('configure-provider')?.addEventListener('click', () => vscode.postMessage({ command: 'configureProvider' }));
+		document.getElementById('open-model-manager')?.addEventListener('click', () => vscode.postMessage({ command: 'openModelManager' }));
 		document.getElementById('run-prompt')?.addEventListener('click', () => vscode.postMessage({ command: 'runPrompt' }));
 		document.getElementById('run-objective')?.addEventListener('click', () => vscode.postMessage({ command: 'runObjective' }));
 		document.getElementById('run-objective-inline')?.addEventListener('click', () => vscode.postMessage({ command: 'runObjective' }));
@@ -707,6 +962,9 @@ function getDashboardHtml(webview: vscode.Webview, logoUri: vscode.Uri, dashboar
 		document.getElementById('stop-mcp')?.addEventListener('click', () => vscode.postMessage({ command: 'stopMcp' }));
 		document.getElementById('copy-acp')?.addEventListener('click', () => vscode.postMessage({ command: 'copyAcp' }));
 		document.getElementById('show-persona')?.addEventListener('click', () => vscode.postMessage({ command: 'showPersona' }));
+		document.getElementById('open-tools')?.addEventListener('click', () => vscode.postMessage({ command: 'openTools' }));
+		document.getElementById('open-settings')?.addEventListener('click', () => vscode.postMessage({ command: 'openSettings' }));
+		document.getElementById('open-extensions')?.addEventListener('click', () => vscode.postMessage({ command: 'openExtensions' }));
 	</script>
 </body>
 </html>`;

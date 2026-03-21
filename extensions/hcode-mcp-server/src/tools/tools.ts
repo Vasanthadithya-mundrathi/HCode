@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) Vasantha Adithya. All rights reserved.
- *  Licensed under the MIT License.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -8,7 +8,7 @@ import { z } from 'zod';
 import type { IHCodeToolsAPI } from '../types.js';
 
 export function registerSecurityToolTools(server: McpServer, api: IHCodeToolsAPI): void {
-	// ── List tools ────────────────────────────────────────────────────────────
+	// List tools
 	server.tool(
 		'hcode_tools_list',
 		'List all available security tools with their categories, presets, installation hints, and whether the binary is installed on this machine.',
@@ -43,7 +43,7 @@ export function registerSecurityToolTools(server: McpServer, api: IHCodeToolsAPI
 		},
 	);
 
-	// ── Check availability ────────────────────────────────────────────────────
+	// Check availability
 	server.tool(
 		'hcode_tools_check_availability',
 		'Check which security tool binaries are installed on the local machine.',
@@ -65,7 +65,7 @@ export function registerSecurityToolTools(server: McpServer, api: IHCodeToolsAPI
 		},
 	);
 
-	// ── Run tool ──────────────────────────────────────────────────────────────
+	// Run tool
 	server.tool(
 		'hcode_tools_run',
 		'Run a security tool in a VS Code terminal. Provide the tool ID and the raw command-line arguments. Use hcode_tools_list to get preset argument templates for each tool where {target} can be replaced.',
@@ -84,7 +84,25 @@ export function registerSecurityToolTools(server: McpServer, api: IHCodeToolsAPI
 		},
 	);
 
-	// ── Run tool on device ────────────────────────────────────────────────────
+	// Install tool locally
+	server.tool(
+		'hcode_tools_install',
+		'Install a local security tool with one-click workflow in VS Code. This launches an install terminal and verifies that the binary is available afterward.',
+		{
+			toolId: z.string().describe('Tool ID (e.g. "nmap", "sqlmap", "ffuf", "subfinder")'),
+		},
+		async (args: { toolId: string }) => {
+			try {
+				await api.installToolHeadless(args.toolId);
+				return { content: [{ type: 'text' as const, text: `Started one-click install for "${args.toolId}". Check the VS Code terminal panel for progress.` }] };
+			} catch (err: unknown) {
+				const message = err instanceof Error ? err.message : String(err);
+				return { content: [{ type: 'text' as const, text: `Error installing ${args.toolId}: ${message}` }] };
+			}
+		},
+	);
+
+	// Run tool on device
 	server.tool(
 		'hcode_tools_run_on_device',
 		'Run a security tool on a remote SSH device. Useful for running tools from a VPS or pivot host. Uses hcode-devices to open an SSH terminal and sends the tool command.',

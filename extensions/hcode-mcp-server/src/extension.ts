@@ -13,8 +13,17 @@ import { registerDeviceTools } from './tools/devices.js';
 import { registerSecurityToolTools } from './tools/tools.js';
 import { registerCTFTools } from './tools/ctf.js';
 import { registerSkillTools } from './tools/skills.js';
-import { isHCodeBugBountyAPI, isHCodeDevicesAPI, isHCodeSkillsAPI, isHCodeToolsAPI } from './types.js';
-import type { IHCodeBugBountyAPI, IHCodeDevicesAPI, IHCodeToolsAPI, IHCodeSkillsAPI } from './types.js';
+import { registerCapabilityTools } from './tools/capabilities.js';
+import {
+	isHCodeBugBountyAPI,
+	isHCodeDevicesAPI,
+	isHCodeSkillsAPI,
+	isHCodeToolsAPI,
+	type IHCodeBugBountyAPI,
+	type IHCodeDevicesAPI,
+	type IHCodeToolsAPI,
+	type IHCodeSkillsAPI,
+} from './types.js';
 
 let httpServer: http.Server | undefined;
 let activePort: number | undefined;
@@ -50,6 +59,7 @@ interface ExtensionLoadResult<T> {
  */
 function buildMcpServer(apis: HCodeAPIs): McpServer {
 	const mcp = new McpServer({ name: 'hcode', version: '1.0.0' });
+	registerCapabilityTools(mcp);
 	registerBugBountyTools(mcp, apis.bb);
 	registerDeviceTools(mcp, apis.dev);
 	registerSecurityToolTools(mcp, apis.tools);

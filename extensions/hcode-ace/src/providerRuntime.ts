@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
+import { spawn } from 'child_process';
 import { AceProviderRegistry } from './providerRegistry';
 import { AceProviderDefinition, AceProviderInvocationRequest, AceProviderInvocationResult } from './types';
 
@@ -16,6 +17,14 @@ interface ProviderRuntimeConfig {
 	timeoutMs: number;
 	azureDeployment?: string;
 	azureApiVersion: string;
+}
+
+interface CliAdapterConfig {
+	command: string;
+	args: string[];
+	passViaStdin: boolean;
+	timeoutMs: number;
+	env: Record<string, string>;
 }
 
 export class AceProviderRuntime {
@@ -77,7 +86,8 @@ export class AceProviderRuntime {
 		}
 
 		const apiKey = await this.providerRegistry.getApiKey(resolvedProviderId);
-		if (!apiKey && resolvedProviderId !== 'ollama') {
+		const requiresApiKey = provider.protocols.includes('api-key');
+		if (requiresApiKey && !apiKey && resolvedProviderId !== 'ollama') {
 			throw new Error(`ACE provider '${provider.label}' is not configured. Add its API key first.`);
 		}
 
@@ -99,6 +109,10 @@ export class AceProviderRuntime {
 
 	private async invokeProvider(config: ProviderRuntimeConfig, request: AceProviderInvocationRequest): Promise<string> {
 		switch (config.providerId) {
+			case 'gemini-cli':
+			case 'qwen-cli':
+			case 'opencode-cli':
+				return this.invokeCliAdapter(config, request);
 			case 'anthropic':
 				return this.invokeAnthropic(config, request);
 			case 'google-gemini':
@@ -118,6 +132,91 @@ export class AceProviderRuntime {
 			default:
 				return this.invokeOpenAICompatible(config, request, '/v1/chat/completions');
 		}
+	}
+
+	private async invokeCliAdapter(config: ProviderRuntimeConfig, request: AceProviderInvocationRequest): Promise<string> {
+		const adapterConfig = this.resolveCliAdapterConfig(config.providerId, request, config.timeoutMs);
+		const args = adapterConfig.args.map(arg => arg
+			.replace(/\{prompt\}/g, request.prompt)
+			.replace(/\{systemPrompt\}/g, request.systemPrompt ?? '')
+		);
+
+		return new Promise<string>((resolve, reject) => {
+			const child = spawn(adapterConfig.command, args, {
+				env: { ...process.env, ...adapterConfig.env },
+				stdio: ['pipe', 'pipe', 'pipe'],
+			});
+
+			let stdout = '';
+			let stderr = '';
+			const timeout = setTimeout(() => {
+				child.kill('SIGTERM');
+				reject(new Error(`ACE CLI adapter '${config.provider.label}' timed out after ${adapterConfig.timeoutMs} ms.`));
+			}, adapterConfig.timeoutMs);
+
+			child.stdout.on('data', chunk => {
+				stdout += chunk.toString();
+			});
+
+			child.stderr.on('data', chunk => {
+				stderr += chunk.toString();
+			});
+
+			child.on('error', error => {
+				clearTimeout(timeout);
+				reject(new Error(`ACE CLI adapter '${config.provider.label}' failed to start: ${error.message}`));
+			});
+
+			child.on('close', code => {
+				clearTimeout(timeout);
+				if (code !== 0) {
+					reject(new Error(`ACE CLI adapter '${config.provider.label}' exited with code ${code}. ${stderr.trim()}`.trim()));
+					return;
+				}
+
+				const text = stdout.trim();
+				if (!text) {
+					reject(new Error(`ACE CLI adapter '${config.provider.label}' returned empty output. ${stderr.trim()}`.trim()));
+					return;
+				}
+
+				resolve(text);
+			});
+
+			const input = `${request.systemPrompt ? `${request.systemPrompt}\n\n` : ''}${request.prompt}`;
+			if (adapterConfig.passViaStdin) {
+				child.stdin.write(input);
+			}
+			child.stdin.end();
+		});
+	}
+
+	private resolveCliAdapterConfig(providerId: string, request: AceProviderInvocationRequest, fallbackTimeoutMs: number): CliAdapterConfig {
+		const aceConfiguration = this.configurationService.getConfiguration('hcode.ace');
+		const adapters = aceConfiguration.get<Record<string, {
+			command?: string;
+			args?: string[];
+			passViaStdin?: boolean;
+			timeoutMs?: number;
+			env?: Record<string, string>;
+		}>>('cliAdapters', {});
+
+		const configured = adapters[providerId];
+		if (!configured?.command?.trim()) {
+			throw new Error(`ACE CLI adapter '${providerId}' is not configured. Set hcode.ace.cliAdapters.${providerId}.command.`);
+		}
+
+		const args = Array.isArray(configured.args) ? configured.args : [];
+		const hasPromptPlaceholder = args.some(arg => arg.includes('{prompt}'));
+		const finalArgs = hasPromptPlaceholder ? args : [...args, request.prompt];
+
+		return {
+			command: configured.command.trim(),
+			args: finalArgs,
+			passViaStdin: Boolean(configured.passViaStdin),
+			timeoutMs: configured.timeoutMs && configured.timeoutMs > 0 ? configured.timeoutMs : fallbackTimeoutMs,
+			env: configured.env ?? {},
+		};
 	}
 
 	private async invokeOpenAICompatible(config: ProviderRuntimeConfig, request: AceProviderInvocationRequest, path: string, extraHeaders: Record<string, string> = {}): Promise<string> {

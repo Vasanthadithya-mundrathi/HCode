@@ -43,6 +43,18 @@ export interface AceDashboardModel {
 	activeModel: string;
 	defaultPersonaId: string;
 	providers: AceProviderStatus[];
+	cliDetected: string[];
+	kaliStatus: {
+		host: string;
+		port: number;
+		reachable: boolean;
+	};
+	integrationExtensions: {
+		mcp: boolean;
+		tools: boolean;
+		skills: boolean;
+		devices: boolean;
+	};
 	personas: AcePersona[];
 	skillPacks: AceSkillPack[];
 	mcpStatus: AceMcpStatus;
@@ -99,4 +111,20 @@ export interface AceAcpRunResult {
 	plan: AceAcpTaskPlan[];
 	workers: AceAcpWorkerResult[];
 	summary: string;
+}
+
+export interface AceCapability {
+	id: string;
+	label: string;
+	domain: 'ace' | 'mcp' | 'tools' | 'skills' | 'devices' | 'bugbounty';
+	command: string;
+	requiresExtension?: string;
+	available: boolean;
+	reason?: string;
+}
+
+export interface AceCapabilityModel {
+	apiVersion: '1.0';
+	generatedAt: string;
+	capabilities: AceCapability[];
 }

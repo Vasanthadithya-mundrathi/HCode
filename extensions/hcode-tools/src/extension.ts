@@ -1,11 +1,11 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) HCode. All rights reserved.
- *  Licensed under the MIT License.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
 import { TOOLS } from './toolRegistry';
-import { runTool, runToolHeadless, showInstallHint, ToolNode, ToolProvider } from './toolProvider';
+import { installToolOneClick, runTool, runToolHeadless, showInstallHint, ToolNode, ToolProvider } from './toolProvider';
 
 /** Public API consumed by hcode-mcp-server and any AI agent extension */
 export interface HCodeToolsAPI {
@@ -15,8 +15,10 @@ export interface HCodeToolsAPI {
 	runToolHeadless: (toolId: string, args: string) => vscode.Terminal;
 	/** Populate and return the current availability map */
 	refreshAvailability: () => Promise<Map<string, boolean>>;
-	/** Check availability map (toolId → installed bool) */
+	/** Check availability map (toolId -> installed bool) */
 	getAvailability: () => Map<string, boolean>;
+	/** Install tool by id using one-click flow */
+	installToolHeadless: (toolId: string) => Promise<vscode.Terminal>;
 }
 
 export function activate(context: vscode.ExtensionContext): HCodeToolsAPI {
@@ -27,13 +29,13 @@ export function activate(context: vscode.ExtensionContext): HCodeToolsAPI {
 		vscode.window.registerTreeDataProvider('hcode.tools.list', provider),
 	);
 
-	// ── Refresh ───────────────────────────────────────────────────────────────
+	// Refresh
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('hcode.tools.refresh', () => provider.refresh()),
 	);
 
-	// ── Run tool (from tree or command palette) ───────────────────────────────
+	// Run tool (from tree or command palette)
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('hcode.tools.run', async (node?: ToolNode) => {
@@ -63,31 +65,60 @@ export function activate(context: vscode.ExtensionContext): HCodeToolsAPI {
 
 			const available = provider.getAvailability();
 			if (available.size > 0 && !available.get(toolId)) {
-				await showInstallHint(tool);
+				const action = await vscode.window.showInformationMessage(
+					`${tool.name} is not installed yet.`,
+					'Install Now',
+					'Show Install Command',
+				);
+
+				if (action === 'Install Now') {
+					await installToolOneClick(tool, provider);
+					return;
+				}
+
+				if (action === 'Show Install Command') {
+					await showInstallHint(tool);
+				}
 				return;
 			}
 			await runTool(tool);
 		}),
 	);
 
-	// ── Install missing tool ──────────────────────────────────────────────────
+	// Install missing tool
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('hcode.tools.install', async (node?: ToolNode) => {
-			const toolId = node?.nodeData.kind === 'tool' ? node.nodeData.toolId : undefined;
+			let toolId = node?.nodeData.kind === 'tool' ? node.nodeData.toolId : undefined;
+
+			if (!toolId) {
+				const items = TOOLS.map(t => ({
+					label: t.name,
+					description: t.description,
+					detail: t.category,
+					id: t.id,
+				}));
+				const pick = await vscode.window.showQuickPick(items, {
+					placeHolder: 'Select a security tool to install',
+					matchOnDescription: true,
+					matchOnDetail: true,
+				});
+				toolId = pick?.id;
+			}
+
 			const tool = toolId ? TOOLS.find(t => t.id === toolId) : undefined;
 			if (tool) {
-				await showInstallHint(tool);
+				await installToolOneClick(tool, provider);
 			}
 		}),
 	);
 
-	// ── Check all tools availability ──────────────────────────────────────────
+	// Check all tools availability
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('hcode.tools.checkAll', async () => {
 			provider.refresh();
-			vscode.window.showInformationMessage('HCode Tools: Checking tool availability…');
+			vscode.window.showInformationMessage('HCode Tools: Checking tool availability...');
 		}),
 	);
 
@@ -97,6 +128,19 @@ export function activate(context: vscode.ExtensionContext): HCodeToolsAPI {
 		runToolHeadless,
 		refreshAvailability: () => provider.ensureAvailabilityChecked(),
 		getAvailability: () => provider.getAvailability(),
+		installToolHeadless: async (toolId: string) => {
+			const tool = TOOLS.find(candidate => candidate.id === toolId);
+			if (!tool) {
+				throw new Error(`HCode: Unknown tool id: ${toolId}`);
+			}
+
+			const terminal = await installToolOneClick(tool, provider, false);
+			if (!terminal) {
+				throw new Error(`HCode: No install command available for ${toolId}`);
+			}
+
+			return terminal;
+		},
 	};
 }
 

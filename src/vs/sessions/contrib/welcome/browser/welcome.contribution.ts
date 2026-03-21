@@ -138,10 +138,19 @@ class SessionsWelcomeContribution extends Disposable implements IWorkbenchContri
 		@IProductService private readonly productService: IProductService,
 		@IStorageService private readonly storageService: IStorageService,
 		@IContextKeyService private readonly contextKeyService: IContextKeyService,
+		@ILogService private readonly logService: ILogService,
 	) {
 		super();
 
 		if (!this.productService.defaultChatAgent?.chatExtensionId) {
+			return;
+		}
+
+		// Local/dev distributions without an extension gallery cannot complete chat setup.
+		// Skip blocking sign-in overlay in that environment so Sessions stays usable.
+		if (!this.productService.extensionsGallery) {
+			this.logService.info('[sessions welcome] No extension gallery configured; skipping chat setup overlay.');
+			this.storageService.store(WELCOME_COMPLETE_KEY, true, StorageScope.APPLICATION, StorageTarget.MACHINE);
 			return;
 		}
 
