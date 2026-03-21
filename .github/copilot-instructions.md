@@ -1,155 +1,92 @@
-# HCode Copilot Instructions
+# HCode Agent Instructions
 
-## HCode Context
+## Product Identity
 
-HCode is a security-focused fork/product built on top of Code - OSS. Treat this repository as HCode-first for product identity, documentation, release workflows, and extension behavior.
+HCode is a security-focused fork/product built on top of Code - OSS and is owned by Vasanthadithya-mundrathi.
 
-When touching upstream Code - OSS subsystems, preserve existing architecture and conventions. When adding HCode-owned product surfaces (for example under `extensions/hcode-*`, product docs, or HCode workflows), prefer HCode naming and branding.
+Treat this repository as HCode-first for:
 
-## Project Overview
+- Product naming and branding.
+- Documentation and issue links.
+- Release workflows and packaging.
+- Extension behavior for offensive/defensive security workflows.
 
-Visual Studio Code is built with a layered architecture using TypeScript, web APIs and Electron, combining web technologies with native app capabilities. The codebase is organized into key architectural layers:
+When touching upstream subsystems, preserve existing architecture and conventions. When touching HCode-owned surfaces (for example under `extensions/hcode-*`, `docs/`, and HCode workflows), prefer HCode naming and behavior.
 
-### Root Folders
-- `src/`: Main TypeScript source code with unit tests in `src/vs/*/test/` folders
-- `build/`: Build scripts and CI/CD tools
-- `extensions/`: Built-in extensions that ship with VS Code
-- `test/`: Integration tests and test infrastructure
-- `scripts/`: Development and build scripts
-- `resources/`: Static resources (icons, themes, etc.)
-- `out/`: Compiled JavaScript output (generated during build)
+## HCode Surfaces
 
-### Core Architecture (`src/` folder)
-- `src/vs/base/` - Foundation utilities and cross-platform abstractions
-- `src/vs/platform/` - Platform services and dependency injection infrastructure
-- `src/vs/editor/` - Text editor implementation with language services, syntax highlighting, and editing features
-- `src/vs/workbench/` - Main application workbench for web and desktop
-  - `workbench/browser/` - Core workbench UI components (parts, layout, actions)
-  - `workbench/services/` - Service implementations
-  - `workbench/contrib/` - Feature contributions (git, debug, search, terminal, etc.)
-  - `workbench/api/` - Extension host and VS Code API implementation
-- `src/vs/code/` - Electron main process specific implementation
-- `src/vs/server/` - Server specific implementation
+The primary HCode extensions and capabilities are:
 
-The core architecture follows these principles:
-- **Layered architecture** - from `base`, `platform`, `editor`, to `workbench`
-- **Dependency injection** - Services are injected through constructor parameters
-    - If non-service parameters are needed, they need to come after the service parameters
-- **Contribution model** - Features contribute to registries and extension points
-- **Cross-platform compatibility** - Abstractions separate platform-specific code
+- `extensions/hcode-tools`: security tool registry and execution.
+- `extensions/hcode-devices`: SSH device inventory and remote dispatch.
+- `extensions/hcode-bugbounty`: program, scope, and finding lifecycle.
+- `extensions/hcode-skills`: reusable playbooks and guided runs.
+- `extensions/hcode-ctf`: CTF helpers (decode/hash/xor panel).
+- `extensions/hcode-mcp-server`: MCP HTTP bridge for external agents.
+- `extensions/hcode-ace`: ACE dashboard, provider router, ACP orchestration.
+- `extensions/theme-hcode`: HCode visual identity defaults.
 
-### Built-in Extensions (`extensions/` folder)
-The `extensions/` directory contains first-party extensions that ship with VS Code:
-- **Language support** - `typescript-language-features/`, `html-language-features/`, `css-language-features/`, etc.
-- **Core features** - `git/`, `debug-auto-launch/`, `emmet/`, `markdown-language-features/`
-- **Themes** - `theme-*` folders for default color themes
-- **Development tools** - `extension-editing/`, `vscode-api-tests/`
+## ACE / ACP / MCP Notes
 
-Each extension follows the standard VS Code extension structure with `package.json`, TypeScript sources, and contribution points to extend the workbench through the Extension API.
+- ACE is the control plane for provider routing and operations UX.
+- ACP is bounded orchestration with explicit terminal states.
+- MCP is local-first and can be exposed remotely only with hardening.
 
-### Finding Related Code
-1. **Semantic search first**: Use file search for general concepts
-2. **Grep for exact strings**: Use grep for error messages or specific function names
-3. **Follow imports**: Check what files import the problematic module
-4. **Check test files**: Often reveal usage patterns and expected behavior
+For remote MCP guidance, see `docs/HCODE_MCP_DEPLOYMENT.md`.
 
-## Validating TypeScript changes
+## Validation Rules
 
-MANDATORY: Always check the `VS Code - Build` watch task output via #runTasks/getTaskOutput for compilation errors before running ANY script or declaring work complete, then fix all compilation errors before moving forward.
+For TypeScript changes:
 
-- NEVER run tests if there are compilation errors
-- NEVER use `npm run compile` to compile TypeScript files but call #runTasks/getTaskOutput instead
+- Always check `VS Code - Build` task output before declaring completion.
+- Do not run tests while there are active compile/type errors.
+- Prefer existing workspace tasks and scripts over ad hoc command chains.
 
-### TypeScript compilation steps
-- Monitor the `VS Code - Build` task outputs for real-time compilation errors as you make changes
-- This task runs `Core - Build` and `Ext - Build` to incrementally compile VS Code TypeScript sources and built-in extensions
-- Start the task if it's not already running in the background
-- For TypeScript changes in the `build` folder, you can simply run `npm run typecheck` in the `build` folder.
+For docs/workflow changes:
 
-### TypeScript validation steps
-- Use the run test tool if you need to run tests. If that tool is not available, then you can use `scripts/test.sh` (or `scripts\test.bat` on Windows) for unit tests (add `--grep <pattern>` to filter tests) or `scripts/test-integration.sh` (or `scripts\test-integration.bat` on Windows) for integration tests (integration tests end with .integrationTest.ts or are in /extensions/).
-- Use `npm run valid-layers-check` to check for layering issues
+- Validate file diagnostics.
+- Ensure links/paths are HCode-specific and not Microsoft VS Code defaults.
 
-## Coding Guidelines
+## Coding Conventions
 
 ### Indentation
 
-We use tabs, not spaces.
+- Use tabs, not spaces.
 
-### Naming Conventions
+### Naming
 
-- Use PascalCase for `type` names
-- Use PascalCase for `enum` values
-- Use camelCase for `function` and `method` names
-- Use camelCase for `property` names and `local variables`
-- Use whole words in names when possible
+- PascalCase for types and enum values.
+- camelCase for functions, methods, properties, and locals.
+- Prefer whole words in symbol names.
 
 ### Types
 
-- Do not export `types` or `functions` unless you need to share it across multiple components
-- Do not introduce new `types` or `values` to the global namespace
+- Avoid `any`/`unknown` unless unavoidable.
+- Do not export types/functions unless they are shared across components.
 
-### Comments
+### Strings and UI
 
-- Use JSDoc style comments for `functions`, `interfaces`, `enums`, and `classes`
-
-### Strings
-
-- Use "double quotes" for strings shown to the user that need to be externalized (localized)
-- Use 'single quotes' otherwise
-- All strings visible to the user need to be externalized using the `vs/nls` module
-- Externalized strings must not use string concatenation. Use placeholders instead (`{0}`).
-
-### UI labels
-- Use title-style capitalization for command labels, buttons and menu items (each word is capitalized).
-- Don't capitalize prepositions of four or fewer letters unless it's the first or last word (e.g. "in", "with", "for").
+- Use single quotes for non-user-facing strings.
+- Use localized strings for user-facing text where required by subsystem.
+- Use title-style capitalization for commands and menu labels.
 
 ### Style
 
-- Use arrow functions `=>` over anonymous function expressions
-- Only surround arrow function parameters when necessary. For example, `(x) => x + x` is wrong but the following are correct:
+- Prefer `async`/`await` over raw promise chains.
+- Use arrow functions where appropriate.
+- Keep loop/conditional bodies in braces.
+- Prefer `export function` over top-level `export const fn =` where practical.
 
-```typescript
-x => x + x
-(x, y) => x + y
-<T>(x: T, y: T) => x === y
-```
+### Quality and Ownership
 
-- Always surround loop and conditional bodies with curly braces
-- Open curly braces always go on the same line as whatever necessitates them
-- Parenthesized constructs should have no surrounding whitespace. A single space follows commas, colons, and semicolons in those constructs. For example:
+- Keep existing headers unchanged unless a migration explicitly requires updates.
+- Do not add Microsoft-only ownership headers to new HCode-owned files.
+- Reuse existing utilities/patterns before creating new abstractions.
+- Register disposables immediately and avoid leak-prone listener patterns.
 
-```typescript
-for (let i = 0, n = str.length; i < 10; i++) {
-    if (x < 10) {
-        foo();
-    }
-}
-function f(x: number, y: string): void { }
-```
+## File Discovery Hints
 
-- Whenever possible, use in top-level scopes `export function x(…) {…}` instead of `export const x = (…) => {…}`. One advantage of using the `function` keyword is that the stack-trace shows a good name when debugging.
-
-### Code Quality
-
-- Keep existing file headers unchanged unless there is a clear project-wide migration task.
-- For new HCode-owned files, use HCode-appropriate ownership/header text and avoid introducing Microsoft-only ownership headers.
-- Prefer `async` and `await` over `Promise` and `then` calls
-- All user facing messages must be localized using the applicable localization framework (for example `nls.localize()` method)
-- Don't add tests to the wrong test suite (e.g., adding to end of file instead of inside relevant suite)
-- Look for existing test patterns before creating new structures
-- Use `describe` and `test` consistently with existing patterns
-- Prefer regex capture groups with names over numbered capture groups.
-- If you create any temporary new files, scripts, or helper files for iteration, clean up these files by removing them at the end of the task
-- Never duplicate imports. Always reuse existing imports if they are present.
-- Do not use `any` or `unknown` as the type for variables, parameters, or return values unless absolutely necessary. If they need type annotations, they should have proper types or interfaces defined.
-- When adding file watching, prefer correlated file watchers (via fileService.createWatcher) to shared ones.
-- When adding tooltips to UI elements, prefer the use of IHoverService service.
-- Do not duplicate code. Always look for existing utility functions, helpers, or patterns in the codebase before implementing new functionality. Reuse and extend existing code whenever possible.
-- You MUST deal with disposables by registering them immediately after creation for later disposal. Use helpers such as `DisposableStore`, `MutableDisposable` or `DisposableMap`. Do NOT register a disposable to the containing class if the object is created within a method that is called repeadedly to avoid leaks. Instead, return a `IDisposable` from such method and let the caller register it.
-- You MUST NOT use storage keys of another component only to make changes to that component. You MUST come up with proper API to change another component.
-- Use `IEditorService` to open editors instead of `IEditorGroupsService.activeGroup.openEditor` to ensure that the editor opening logic is properly followed and to avoid bypassing important features such as `revealIfOpened` or `preserveFocus`.
-- Avoid using `bind()`, `call()` and `apply()` solely to control `this` or partially apply arguments; prefer arrow functions or closures to capture the necessary context, and use these methods only when required by an API or interoperability.
-
-## Learnings
-- Minimize the amount of assertions in tests. Prefer one snapshot-style `assert.deepStrictEqual` over multiple precise assertions, as they are much more difficult to understand and to update.
+- Start with semantic/file search for broad concepts.
+- Use fast grep for exact command IDs, settings keys, and error strings.
+- Follow imports and command registrations to verify runtime wiring.
+- Check related tests before changing behavior.
