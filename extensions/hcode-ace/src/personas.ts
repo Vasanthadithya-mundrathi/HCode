@@ -37,4 +37,4 @@ export const acePersonas: readonly AcePersona[] = [
 
 export function getPersona(personaId: string): AcePersona | undefined {
 	return acePersonas.find(persona => persona.id === personaId);
-} 
+}

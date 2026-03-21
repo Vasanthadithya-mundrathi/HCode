@@ -19,26 +19,17 @@
       { "command": "hcode.recon.whois", "title": "HCode Recon: WHOIS Lookup", "category": "HCode Recon" },
       { "command": "hcode.recon.clearResults", "title": "HCode Recon: Clear Results", "category": "HCode Recon", "icon": "$(trash)" }
     ],
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "hcode-recon",
-          "title": "HCode Recon",
-          "icon": "$(radio-tower)"
-        }
-      ]
-    },
     "views": {
-      "hcode-recon": [
+      "hcode": [
         {
           "id": "hcode.recon.targets",
-          "name": "Targets",
+          "name": "Recon Targets",
           "icon": "$(target)"
         },
         {
           "type": "webview",
           "id": "hcode.recon.results",
-          "name": "Scan Results",
+          "name": "Recon Results",
           "icon": "$(output)"
         }
       ]

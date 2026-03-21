@@ -82,8 +82,9 @@ The following areas still need product development, but they do not block the cu
 - ACE provider routing executes real provider HTTP requests, but still depends on real credentials, tenant-specific endpoints, and operator validation against live services.
 - ACP is implemented as a bounded runtime for short worker plans, but not yet as a full production scheduler with persistence, retries, background orchestration, or long-lived state.
 - Some additional extension manifests exist as early scaffolds without full implementation behind them.
-- Runtime UX polish, credentialed end-to-end acceptance testing, and packaged-build validation across macOS, Linux, and Windows are still pending.
-- MCP is loopback-bound and now supports optional bearer-token protection, but broader packaging and deployment guidance is still pending.
+- Runtime UX polish and credentialed end-to-end acceptance testing are still pending.
+- Packaged builds now have a multi-OS GitHub release workflow baseline in `.github/workflows/release-hcode.yml`; signing/notarization hardening is still pending.
+- MCP is loopback-bound by default and now has a remote deployment hardening guide in `docs/HCODE_MCP_DEPLOYMENT.md`.
 
 ## Recommended Handoff Scope
 

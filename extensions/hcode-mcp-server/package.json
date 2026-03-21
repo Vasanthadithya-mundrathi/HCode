@@ -83,7 +83,23 @@
           "description": "Additional browser origins allowed to access the MCP endpoint. Localhost and loopback origins are always allowed."
         }
       }
-    }
+    },
+    "keybindings": [
+      {
+        "command": "hcode.mcp.startServer",
+        "key": "cmd+alt+m",
+        "mac": "cmd+alt+m",
+        "linux": "ctrl+alt+m",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "hcode.mcp.copyServerUrl",
+        "key": "cmd+alt+shift+m",
+        "mac": "cmd+alt+shift+m",
+        "linux": "ctrl+alt+shift+m",
+        "when": "!terminalFocus"
+      }
+    ]
   },
   "scripts": {
     "compile": "tsc -p tsconfig.json",

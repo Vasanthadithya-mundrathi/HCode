@@ -12,9 +12,10 @@ import { acePersonas, getPersona } from './personas';
 import { AceProviderRegistry } from './providerRegistry';
 import { AceProviderRuntime } from './providerRuntime';
 import { aceSkillPacks } from './skillPacks';
-import { AceAcpRunResult, AceCapability, AceCapabilityModel, AceDashboardModel, AceMcpStatus, AceProviderInvocationResult } from './types';
+import { AceAcpLastRunSummary, AceAcpRunResult, AceCapability, AceCapabilityModel, AceDashboardModel, AceMcpStatus, AceProviderInvocationResult } from './types';
 
 const execFileAsync = promisify(execFile);
+const aceAcpLastRunStateKey = 'hcode.ace.acp.lastRunState';
 
 interface HCodeMCPServerApi {
 	startServer(): Promise<void>;
@@ -32,7 +33,7 @@ export interface HCodeACEApi {
 export function activate(context: vscode.ExtensionContext): HCodeACEApi {
 	const providerRegistry = new AceProviderRegistry(context.secrets, vscode.workspace);
 	const providerRuntime = new AceProviderRuntime(providerRegistry, vscode.workspace);
-	const dashboardProvider = new AceDashboardViewProvider(context.extensionUri, providerRegistry);
+	const dashboardProvider = new AceDashboardViewProvider(context.extensionUri, providerRegistry, context);
 
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(AceDashboardViewProvider.viewId, dashboardProvider),
@@ -58,7 +59,7 @@ export function activate(context: vscode.ExtensionContext): HCodeACEApi {
 			dashboardProvider.refresh();
 		}),
 		vscode.commands.registerCommand('hcode.ace.runObjective', async () => {
-			await runAcpObjective(providerRuntime);
+			await runAcpObjective(context, providerRuntime);
 			dashboardProvider.refresh();
 		}),
 		vscode.commands.registerCommand('hcode.ace.copyMcpUrl', async () => {
@@ -113,7 +114,7 @@ export function activate(context: vscode.ExtensionContext): HCodeACEApi {
 	);
 
 	return {
-		getDashboardModel: () => getDashboardModel(providerRegistry, providerRuntime),
+		getDashboardModel: () => getDashboardModel(context, providerRegistry, providerRuntime),
 		getAcpSpec: async () => buildAcpSpec(),
 		getCapabilities: () => getCapabilityModel(),
 	};
@@ -129,7 +130,8 @@ class AceDashboardViewProvider implements vscode.WebviewViewProvider {
 
 	constructor(
 		private readonly extensionUri: vscode.Uri,
-		private readonly providerRegistry: AceProviderRegistry
+		private readonly providerRegistry: AceProviderRegistry,
+		private readonly context: vscode.ExtensionContext,
 	) { }
 
 	resolveWebviewView(webviewView: vscode.WebviewView): void | Thenable<void> {
@@ -192,7 +194,7 @@ class AceDashboardViewProvider implements vscode.WebviewViewProvider {
 			return;
 		}
 
-		const dashboard = await getDashboardModel(this.providerRegistry, new AceProviderRuntime(this.providerRegistry, vscode.workspace));
+		const dashboard = await getDashboardModel(this.context, this.providerRegistry, new AceProviderRuntime(this.providerRegistry, vscode.workspace));
 		const logoUri = this.view.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'ace-logo.svg'));
 		this.view.title = 'ACE';
 		this.view.description = 'Autonomous Control Engine';
@@ -292,7 +294,7 @@ async function runProviderPrompt(providerRuntime: AceProviderRuntime): Promise<v
 	await vscode.window.showTextDocument(document, { preview: false });
 }
 
-async function runAcpObjective(providerRuntime: AceProviderRuntime): Promise<void> {
+async function runAcpObjective(context: vscode.ExtensionContext, providerRuntime: AceProviderRuntime): Promise<void> {
 	if (!vscode.workspace.getConfiguration('hcode.ace').get<boolean>('enableACPBeta', true)) {
 		void vscode.window.showWarningMessage('ACE ACP Beta is disabled in settings.');
 		return;
@@ -310,8 +312,22 @@ async function runAcpObjective(providerRuntime: AceProviderRuntime): Promise<voi
 	}
 
 	const persona = getDefaultPersona();
+	const normalizedObjective = objective.trim();
 	const activeProviderId = vscode.workspace.getConfiguration('hcode.ace').get<string>('activeProvider', 'openai');
 	const acpRuntime = new AceAcpRuntime(providerRuntime, vscode.workspace.getConfiguration('hcode.ace').get<number>('acpMaxWorkers', 3));
+	const startedAt = new Date();
+	const timeoutMs = vscode.workspace.getConfiguration('hcode.ace').get<number>('acpWorkerTimeoutMs', 120000);
+
+	await persistAcpLastRun(context, {
+		terminalState: 'running',
+		objective: normalizedObjective,
+		providerId: activeProviderId,
+		personaId: persona.id,
+		startedAt: startedAt.toISOString(),
+		totalWorkers: 0,
+		passedWorkers: 0,
+		failedWorkers: 0,
+	});
 
 	let result: AceAcpRunResult;
 	try {
@@ -319,10 +335,31 @@ async function runAcpObjective(providerRuntime: AceProviderRuntime): Promise<voi
 			location: vscode.ProgressLocation.Notification,
 			title: 'ACE ACP: Running objective plan',
 			cancellable: false,
-		}, () => acpRuntime.runObjective(objective.trim(), persona, activeProviderId));
+		}, () => withTimeout(acpRuntime.runObjective(normalizedObjective, persona, activeProviderId), timeoutMs));
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
-		void vscode.window.showErrorMessage(`ACE ACP failed: ${message}`);
+		const finishedAt = new Date();
+		const timedOut = message.includes('timed out');
+
+		await persistAcpLastRun(context, {
+			terminalState: timedOut ? 'timed_out' : 'failed',
+			objective: normalizedObjective,
+			providerId: activeProviderId,
+			personaId: persona.id,
+			startedAt: startedAt.toISOString(),
+			finishedAt: finishedAt.toISOString(),
+			durationMs: finishedAt.getTime() - startedAt.getTime(),
+			totalWorkers: 0,
+			passedWorkers: 0,
+			failedWorkers: 0,
+			errorMessage: message,
+		});
+
+		if (timedOut) {
+			void vscode.window.showWarningMessage(`ACE ACP timed out after ${timeoutMs} ms.`);
+		} else {
+			void vscode.window.showErrorMessage(`ACE ACP failed: ${message}`);
+		}
 		return;
 	}
 
@@ -334,6 +371,20 @@ async function runAcpObjective(providerRuntime: AceProviderRuntime): Promise<voi
 
 	const passedCount = result.workers.filter(worker => worker.validation === 'passed').length;
 	const failedCount = result.workers.length - passedCount;
+	const finishedAt = new Date();
+	await persistAcpLastRun(context, {
+		terminalState: 'completed',
+		objective: result.objective,
+		providerId: result.providerId,
+		personaId: result.personaId,
+		startedAt: startedAt.toISOString(),
+		finishedAt: finishedAt.toISOString(),
+		durationMs: finishedAt.getTime() - startedAt.getTime(),
+		totalWorkers: result.workers.length,
+		passedWorkers: passedCount,
+		failedWorkers: failedCount,
+	});
+
 	if (failedCount > 0) {
 		void vscode.window.showWarningMessage(`ACE ACP completed with ${passedCount} passed and ${failedCount} failed workers.`);
 	} else {
@@ -341,7 +392,7 @@ async function runAcpObjective(providerRuntime: AceProviderRuntime): Promise<voi
 	}
 }
 
-async function getDashboardModel(providerRegistry: AceProviderRegistry, providerRuntime: AceProviderRuntime): Promise<AceDashboardModel> {
+async function getDashboardModel(context: vscode.ExtensionContext, providerRegistry: AceProviderRegistry, providerRuntime: AceProviderRuntime): Promise<AceDashboardModel> {
 	const aceConfiguration = vscode.workspace.getConfiguration('hcode.ace');
 	const activeProviderId = aceConfiguration.get<string>('activeProvider', 'openai');
 	let activeModel = 'not-configured';
@@ -377,8 +428,28 @@ async function getDashboardModel(providerRegistry: AceProviderRegistry, provider
 		mcpEnabled: aceConfiguration.get<boolean>('enableMCPBridge', true),
 		acpEnabled: aceConfiguration.get<boolean>('enableACPBeta', true),
 		acpMaxWorkers: aceConfiguration.get<number>('acpMaxWorkers', 3),
+		acpLastRun: context.workspaceState.get<AceAcpLastRunSummary>(aceAcpLastRunStateKey),
 		xbowInspiredLoop: aceConfiguration.get<boolean>('xbowInspiredLoop', true)
 	};
+}
+
+async function persistAcpLastRun(context: vscode.ExtensionContext, summary: AceAcpLastRunSummary): Promise<void> {
+	await context.workspaceState.update(aceAcpLastRunStateKey, summary);
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+	let timeoutHandle: NodeJS.Timeout | undefined;
+	const timeoutPromise = new Promise<never>((_, reject) => {
+		timeoutHandle = setTimeout(() => reject(new Error(`ACE ACP timed out after ${timeoutMs} ms`)), timeoutMs);
+	});
+
+	try {
+		return await Promise.race([promise, timeoutPromise]);
+	} finally {
+		if (timeoutHandle) {
+			clearTimeout(timeoutHandle);
+		}
+	}
 }
 
 async function openModelManager(providerRegistry: AceProviderRegistry): Promise<void> {
@@ -734,6 +805,26 @@ function getDashboardHtml(webview: vscode.Webview, logoUri: vscode.Uri, dashboar
 		</div>`).join('');
 
 	const personaGuardrails = persona.guardrails.map(guardrail => `<li>${escapeHtml(guardrail)}</li>`).join('');
+	const acpLastRun = dashboard.acpLastRun;
+	const acpStatusClass = acpLastRun?.terminalState === 'completed'
+		? 'configured'
+		: acpLastRun?.terminalState === 'running'
+			? 'pending'
+			: acpLastRun
+				? 'failed'
+				: 'pending';
+	const acpStatusLabel = acpLastRun
+		? acpLastRun.terminalState === 'timed_out'
+			? 'Timed Out'
+			: acpLastRun.terminalState === 'failed'
+				? 'Failed'
+				: acpLastRun.terminalState === 'running'
+					? 'Running'
+					: 'Completed'
+		: 'No Runs Yet';
+	const acpLastRunDetails = acpLastRun
+		? `${acpLastRun.objective}\nState: ${acpStatusLabel}\nStarted: ${new Date(acpLastRun.startedAt).toLocaleString()}${acpLastRun.finishedAt ? `\nFinished: ${new Date(acpLastRun.finishedAt).toLocaleString()}` : ''}${typeof acpLastRun.durationMs === 'number' ? `\nDuration: ${acpLastRun.durationMs} ms` : ''}\nWorkers: ${acpLastRun.passedWorkers}/${acpLastRun.totalWorkers} passed${acpLastRun.errorMessage ? `\nError: ${acpLastRun.errorMessage}` : ''}`
+		: 'Run an ACP objective to record terminal run state and timings.';
 	const mcpActionButton = dashboard.mcpStatus.isRunning
 		? '<button id="stop-mcp" class="secondary">Stop MCP Bridge</button>'
 		: '<button id="start-mcp">Start MCP Bridge</button>';
@@ -870,6 +961,10 @@ function getDashboardHtml(webview: vscode.Webview, logoUri: vscode.Uri, dashboar
 			color: var(--warn);
 		}
 
+		.pill.failed {
+			color: var(--vscode-errorForeground);
+		}
+
 		.provider.default {
 			border-color: var(--vscode-focusBorder);
 		}
@@ -953,6 +1048,10 @@ function getDashboardHtml(webview: vscode.Webview, logoUri: vscode.Uri, dashboar
 				<div class="card">
 					<div class="card-title-row"><h3>HCode Integrations</h3><span class="pill ${(dashboard.integrationExtensions.mcp && dashboard.integrationExtensions.tools && dashboard.integrationExtensions.skills && dashboard.integrationExtensions.devices) ? 'configured' : 'pending'}">Extension Checks</span></div>
 					<p>MCP: ${dashboard.integrationExtensions.mcp ? 'OK' : 'Missing'} | Tools: ${dashboard.integrationExtensions.tools ? 'OK' : 'Missing'} | Skills: ${dashboard.integrationExtensions.skills ? 'OK' : 'Missing'} | Devices: ${dashboard.integrationExtensions.devices ? 'OK' : 'Missing'}</p>
+				</div>
+				<div class="card">
+					<div class="card-title-row"><h3>ACP Last Run</h3><span class="pill ${acpStatusClass}">${acpStatusLabel}</span></div>
+					<p>${escapeHtml(acpLastRunDetails)}</p>
 				</div>
 			</div>
 		</section>

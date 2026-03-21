@@ -62,7 +62,24 @@ export interface AceDashboardModel {
 	mcpEnabled: boolean;
 	acpEnabled: boolean;
 	acpMaxWorkers: number;
+	acpLastRun?: AceAcpLastRunSummary;
 	xbowInspiredLoop: boolean;
+}
+
+export type AceAcpTerminalState = 'running' | 'completed' | 'failed' | 'timed_out';
+
+export interface AceAcpLastRunSummary {
+	terminalState: AceAcpTerminalState;
+	objective: string;
+	providerId: string;
+	personaId: string;
+	startedAt: string;
+	finishedAt?: string;
+	durationMs?: number;
+	totalWorkers: number;
+	passedWorkers: number;
+	failedWorkers: number;
+	errorMessage?: string;
 }
 
 export interface AceMcpStatus {

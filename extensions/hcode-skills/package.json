@@ -69,7 +69,29 @@
 					"group": "1_run"
 				}
 			]
-		}
+		},
+		"viewsWelcome": [
+			{
+				"view": "hcode.skills.tree",
+				"contents": "Run reusable security playbooks.\n\n[Run Skill](command:hcode.skills.run)\n[Show Playbook](command:hcode.skills.showPlaybook)"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "hcode.skills.run",
+				"key": "cmd+alt+s",
+				"mac": "cmd+alt+s",
+				"linux": "ctrl+alt+s",
+				"when": "view == hcode.skills.tree"
+			},
+			{
+				"command": "hcode.skills.showPlaybook",
+				"key": "cmd+alt+shift+s",
+				"mac": "cmd+alt+shift+s",
+				"linux": "ctrl+alt+shift+s",
+				"when": "view == hcode.skills.tree"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",

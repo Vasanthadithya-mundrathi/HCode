@@ -32,25 +32,16 @@
         "priority": "option"
       }
     ],
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "hcode-binary",
-          "title": "HCode Binary",
-          "icon": "$(file-binary)"
-        }
-      ]
-    },
     "views": {
-      "hcode-binary": [
+      "hcode": [
         {
           "id": "hcode.binary.info",
-          "name": "File Info",
+          "name": "Binary Info",
           "icon": "$(info)"
         },
         {
           "id": "hcode.binary.strings",
-          "name": "Strings",
+          "name": "Binary Strings",
           "icon": "$(symbol-string)"
         }
       ]

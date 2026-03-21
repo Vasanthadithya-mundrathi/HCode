@@ -7,6 +7,12 @@
   "license": "MIT",
   "engines": { "vscode": "*" },
   "categories": ["Other"],
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:hcode.tools.list",
+    "onCommand:hcode.welcome.openGettingStarted",
+    "onCommand:hcode.tools.run"
+  ],
   "main": "./out/extension",
   "contributes": {
     "viewsContainers": {

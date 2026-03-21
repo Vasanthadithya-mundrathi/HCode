@@ -16,26 +16,17 @@
       { "command": "hcode.network.clearProxy", "title": "HCode Network: Clear HTTP Proxy", "category": "HCode Network" },
       { "command": "hcode.network.diffResponses", "title": "HCode Network: Diff Two Responses", "category": "HCode Network" }
     ],
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "hcode-network",
-          "title": "HCode Network",
-          "icon": "$(broadcast)"
-        }
-      ]
-    },
     "views": {
-      "hcode-network": [
+      "hcode": [
         {
           "type": "webview",
           "id": "hcode.network.repeater",
-          "name": "HTTP Repeater",
+          "name": "Network Repeater",
           "icon": "$(globe)"
         },
         {
           "id": "hcode.network.history",
-          "name": "Request History",
+          "name": "Network History",
           "icon": "$(history)"
         }
       ]

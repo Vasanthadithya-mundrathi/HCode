@@ -435,4 +435,4 @@ function getNonce(): string {
 		nonce += charset.charAt(Math.floor(Math.random() * charset.length));
 	}
 	return nonce;
-} 
+}

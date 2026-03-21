@@ -1,0 +1,102 @@
+name: HCode Release
+
+on:
+  push:
+    tags:
+      - 'hcode-v*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag name to publish (for example hcode-v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-packages:
+    name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x64
+            runs_on: ubuntu-24.04
+            build_task: vscode-linux-x64-min-ci
+          - name: macos-arm64
+            runs_on: macos-14
+            build_task: vscode-darwin-arm64-min-ci
+          - name: windows-x64
+            runs_on: windows-2022
+            build_task: vscode-win32-x64-min-ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install Dependencies
+        shell: pwsh
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          for ($i = 1; $i -le 5; $i++) {
+            try {
+              npm ci
+              break
+            }
+            catch {
+              if ($i -eq 5) {
+                throw
+              }
+              Start-Sleep -Seconds 3
+            }
+          }
+
+      - name: Build Package
+        shell: pwsh
+        run: npm run gulp "${{ matrix.build_task }}"
+
+      - name: Upload Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hcode-package-${{ matrix.name }}
+          if-no-files-found: error
+          path: |
+            .build/**/VSCode-*.zip
+            .build/**/VSCode-*.tar.gz
+            .build/**/*.dmg
+            .build/**/*.exe
+            .build/**/*.deb
+            .build/**/*.rpm
+
+  publish-release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-24.04
+    needs: build-packages
+    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') }}
+
+    steps:
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: hcode-package-*
+          merge-multiple: true
+          path: ./.build/release-assets
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
+          name: HCode ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
+          generate_release_notes: true
+          files: ./.build/release-assets/**

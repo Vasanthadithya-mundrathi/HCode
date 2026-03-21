@@ -166,6 +166,29 @@
         { "command": "hcode.capabilities.list" }
       ]
     },
+    "keybindings": [
+      {
+        "command": "hcode.ace.openDashboard",
+        "key": "cmd+alt+a",
+        "mac": "cmd+alt+a",
+        "linux": "ctrl+alt+a",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "hcode.ace.runPrompt",
+        "key": "cmd+alt+p",
+        "mac": "cmd+alt+p",
+        "linux": "ctrl+alt+p",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "hcode.ace.runObjective",
+        "key": "cmd+alt+o",
+        "mac": "cmd+alt+o",
+        "linux": "ctrl+alt+o",
+        "when": "!terminalFocus"
+      }
+    },
     "configuration": {
       "title": "HCode ACE",
       "properties": {
@@ -261,6 +284,12 @@
           "minimum": 1,
           "maximum": 5,
           "description": "Maximum number of ACP worker tasks dispatched for a single objective."
+        },
+        "hcode.ace.acpWorkerTimeoutMs": {
+          "type": "number",
+          "default": 120000,
+          "minimum": 10000,
+          "description": "Timeout in milliseconds for a single ACP objective execution."
         },
         "hcode.ace.xbowInspiredLoop": {
           "type": "boolean",
