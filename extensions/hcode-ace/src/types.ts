@@ -10,6 +10,7 @@ export interface AceProviderDefinition {
 	endpointHint: string;
 	apiKeyLabel: string;
 	defaultModel: string;
+	recommendedModels?: string[];
 	capabilities: string[];
 	protocols: Array<'api-key' | 'mcp' | 'acp' | 'cli-adapter'>;
 }

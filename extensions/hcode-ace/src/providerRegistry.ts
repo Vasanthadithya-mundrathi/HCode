@@ -13,7 +13,8 @@ const providerDefinitions: readonly AceProviderDefinition[] = [
 		description: 'General frontier model provider for reasoning, coding, and orchestration.',
 		endpointHint: 'https://api.openai.com',
 		apiKeyLabel: 'OpenAI API Key',
-		defaultModel: 'gpt-4.1-mini',
+		defaultModel: 'gpt-5.4-mini',
+		recommendedModels: ['gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano'],
 		capabilities: ['chat', 'reasoning', 'tool-calling', 'embeddings'],
 		protocols: ['api-key', 'acp']
 	},
@@ -23,7 +24,8 @@ const providerDefinitions: readonly AceProviderDefinition[] = [
 		description: 'Strong long-context reasoning provider for agent planning and policy-heavy workflows.',
 		endpointHint: 'https://api.anthropic.com',
 		apiKeyLabel: 'Anthropic API Key',
-		defaultModel: 'claude-3-7-sonnet-latest',
+		defaultModel: 'claude-sonnet-4-6',
+		recommendedModels: ['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5'],
 		capabilities: ['chat', 'reasoning', 'long-context'],
 		protocols: ['api-key', 'acp']
 	},
@@ -33,7 +35,8 @@ const providerDefinitions: readonly AceProviderDefinition[] = [
 		description: 'Large-context multimodal provider useful for research-heavy and artifact-heavy runs.',
 		endpointHint: 'https://generativelanguage.googleapis.com',
 		apiKeyLabel: 'Gemini API Key',
-		defaultModel: 'gemini-2.0-flash',
+		defaultModel: 'gemini-2.5-flash',
+		recommendedModels: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'],
 		capabilities: ['chat', 'reasoning', 'multimodal'],
 		protocols: ['api-key', 'acp']
 	},
@@ -43,7 +46,8 @@ const providerDefinitions: readonly AceProviderDefinition[] = [
 		description: 'Broker provider for switching among multiple hosted models through one API key.',
 		endpointHint: 'https://openrouter.ai/api',
 		apiKeyLabel: 'OpenRouter API Key',
-		defaultModel: 'openai/gpt-4o-mini',
+		defaultModel: 'openai/gpt-5.4-mini',
+		recommendedModels: ['openai/gpt-5.4', 'openai/gpt-5.4-mini', 'anthropic/claude-sonnet-4-6'],
 		capabilities: ['routing', 'model-broker'],
 		protocols: ['api-key', 'acp']
 	},
@@ -63,7 +67,8 @@ const providerDefinitions: readonly AceProviderDefinition[] = [
 		description: 'Generic OpenAI-compatible endpoint for Qwen-hosted or self-hosted deployments.',
 		endpointHint: 'https://<host>/v1',
 		apiKeyLabel: 'Qwen-Compatible API Key',
-		defaultModel: 'qwen-plus',
+		defaultModel: 'qwen3.5-plus',
+		recommendedModels: ['qwen3-max', 'qwen3.5-plus', 'qwen3.5-flash', 'qwen-plus-latest'],
 		capabilities: ['chat', 'reasoning', 'openai-compatible'],
 		protocols: ['api-key', 'acp']
 	},
@@ -103,7 +108,8 @@ const providerDefinitions: readonly AceProviderDefinition[] = [
 		description: 'Local model endpoint for offline routing and lab-grade experimentation.',
 		endpointHint: 'http://localhost:11434',
 		apiKeyLabel: 'Ollama Token (optional)',
-		defaultModel: 'llama3.2',
+		defaultModel: 'llama3.3',
+		recommendedModels: ['llama3.3', 'qwen2.5-coder:latest', 'deepseek-r1:latest'],
 		capabilities: ['local-models', 'offline-routing'],
 		protocols: ['api-key', 'acp', 'cli-adapter']
 	}

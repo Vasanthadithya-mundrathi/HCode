@@ -424,15 +424,41 @@ async function openModelManager(providerRegistry: AceProviderRegistry): Promise<
 
 	if (action.id === 'setModel') {
 		const overrides = aceConfiguration.get<Record<string, string>>('providerModelOverrides', {});
-		const model = await vscode.window.showInputBox({
-			prompt: `Set model override for ${provider.label}`,
-			value: overrides[provider.id] ?? provider.defaultModel,
-			ignoreFocusOut: true,
-			validateInput: value => value.trim() ? undefined : 'Model is required',
+
+		const modelPick = await vscode.window.showQuickPick([
+			...(provider.recommendedModels ?? []).map(modelId => ({
+				label: modelId,
+				description: modelId === provider.defaultModel ? 'default' : 'recommended',
+				modelId,
+			})),
+			{
+				label: '$(pencil) Custom model ID...',
+				description: 'Enter manually',
+				modelId: '__custom__',
+			},
+		], {
+			placeHolder: `Select model override for ${provider.label}`,
+			matchOnDescription: true,
 		});
-		if (!model) {
+
+		if (!modelPick) {
 			return;
 		}
+
+		let model = modelPick.modelId;
+		if (modelPick.modelId === '__custom__') {
+			const customModel = await vscode.window.showInputBox({
+				prompt: `Set model override for ${provider.label}`,
+				value: overrides[provider.id] ?? provider.defaultModel,
+				ignoreFocusOut: true,
+				validateInput: value => value.trim() ? undefined : 'Model is required',
+			});
+			if (!customModel) {
+				return;
+			}
+			model = customModel.trim();
+		}
+
 		overrides[provider.id] = model.trim();
 		await aceConfiguration.update('providerModelOverrides', overrides, vscode.ConfigurationTarget.Workspace);
 		void vscode.window.showInformationMessage(`ACE: Model override saved for ${provider.label}.`);

@@ -141,7 +141,29 @@
         { "command": "hcode.bugbounty.addFinding" },
         { "command": "hcode.bugbounty.exportReport" }
       ]
-    }
+    },
+    "viewsWelcome": [
+      {
+        "view": "hcode.bugbounty.programs",
+        "contents": "Track bug bounty programs and findings.\n\n[Add Program](command:hcode.bugbounty.addProgram)\n[Add Finding](command:hcode.bugbounty.addFinding)\n[Export Report](command:hcode.bugbounty.exportReport)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "hcode.bugbounty.addFinding",
+        "key": "cmd+alt+b",
+        "mac": "cmd+alt+b",
+        "linux": "ctrl+alt+b",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "hcode.bugbounty.exportReport",
+        "key": "cmd+alt+shift+b",
+        "mac": "cmd+alt+shift+b",
+        "linux": "ctrl+alt+shift+b",
+        "when": "!terminalFocus"
+      }
+    ]
   },
   "scripts": {
     "compile": "tsc -p tsconfig.json",

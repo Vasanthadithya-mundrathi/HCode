@@ -52,7 +52,30 @@
         { "command": "hcode.ctf.xorBrute" },
         { "command": "hcode.ctf.openPanel" }
       ]
-    }
+    },
+    "keybindings": [
+      {
+        "command": "hcode.ctf.decode",
+        "key": "cmd+alt+e",
+        "mac": "cmd+alt+e",
+        "linux": "ctrl+alt+e",
+        "when": "editorTextFocus && editorHasSelection"
+      },
+      {
+        "command": "hcode.ctf.hashIdentify",
+        "key": "cmd+alt+i",
+        "mac": "cmd+alt+i",
+        "linux": "ctrl+alt+i",
+        "when": "editorTextFocus && editorHasSelection"
+      },
+      {
+        "command": "hcode.ctf.openPanel",
+        "key": "cmd+alt+k",
+        "mac": "cmd+alt+k",
+        "linux": "ctrl+alt+k",
+        "when": "!terminalFocus"
+      }
+    ]
   },
   "scripts": {
     "compile": "tsc -p tsconfig.json",

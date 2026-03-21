@@ -1,13 +1,66 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) HCode. All rights reserved.
- *  Licensed under the MIT License.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import { BugBountyProgram, Finding, HCodeState, ScopeTarget } from './types';
+import { BugBountyProgram, Finding, FindingTemplate, HCodeState, ScopeTarget } from './types';
 import { randomUUID } from 'crypto';
 
 const STATE_KEY = 'hcode.bugbounty.state';
+
+const findingTemplates: readonly FindingTemplate[] = [
+	{
+		id: 'xss-reflected',
+		label: 'Reflected XSS',
+		severity: 'high',
+		cweId: 'CWE-79',
+		titlePrefix: 'Reflected XSS in',
+		description: 'User-controlled input is reflected in the response without proper output encoding, enabling script execution in the victim browser.',
+		stepsToReproduce: '1. Locate a reflected parameter.\n2. Inject a test payload.\n3. Observe JavaScript execution in browser context.',
+		impact: 'An attacker can run arbitrary scripts in victim sessions, leading to session hijacking or sensitive data exposure.',
+	},
+	{
+		id: 'sqli',
+		label: 'SQL Injection',
+		severity: 'critical',
+		cweId: 'CWE-89',
+		titlePrefix: 'SQL Injection in',
+		description: 'Backend queries appear to concatenate unsanitized input, allowing SQL payload execution against the application database.',
+		stepsToReproduce: '1. Identify injectable parameter.\n2. Send boolean/time-based payloads.\n3. Confirm query manipulation and data access impact.',
+		impact: 'Could allow unauthorized data access, modification, or full database compromise depending on DB privileges.',
+	},
+	{
+		id: 'idor',
+		label: 'IDOR / BOLA',
+		severity: 'high',
+		cweId: 'CWE-639',
+		titlePrefix: 'IDOR in',
+		description: 'Authorization checks are missing or insufficient for object-level resource access.',
+		stepsToReproduce: '1. Authenticate as low-privilege user.\n2. Modify object identifier in request.\n3. Access another user resource successfully.',
+		impact: 'Attackers can access or modify data that belongs to other users, violating confidentiality and integrity.',
+	},
+	{
+		id: 'ssrf',
+		label: 'SSRF',
+		severity: 'high',
+		cweId: 'CWE-918',
+		titlePrefix: 'SSRF in',
+		description: 'The application fetches attacker-influenced URLs without strict outbound filtering or target validation.',
+		stepsToReproduce: '1. Find URL-fetching parameter.\n2. Point it to collaborator/internal target.\n3. Confirm outbound request from target environment.',
+		impact: 'May expose internal services and metadata endpoints, enabling lateral movement or credential theft.',
+	},
+	{
+		id: 'auth-bypass',
+		label: 'Authentication / Authorization Bypass',
+		severity: 'critical',
+		cweId: 'CWE-287',
+		titlePrefix: 'Auth Bypass in',
+		description: 'Security controls can be bypassed to access restricted functionality without intended authentication or authorization.',
+		stepsToReproduce: '1. Access protected endpoint.\n2. Manipulate headers/parameters/request flow.\n3. Confirm access without required permissions.',
+		impact: 'Could expose privileged functionality and sensitive data to unauthorized actors.',
+	},
+];
 
 export class ProgramManager {
 	private _state: HCodeState;
@@ -81,6 +134,7 @@ export class ProgramManager {
 		const created: Finding = {
 			id: randomUUID(),
 			title: finding.title.trim(),
+			templateId: finding.templateId,
 			severity: finding.severity,
 			status: finding.status,
 			targetId: finding.targetId,
@@ -111,7 +165,7 @@ export class ProgramManager {
 		return true;
 	}
 
-	// ── Programs ────────────────────────────────────────────────────────────
+	// Programs
 
 	async addProgram(): Promise<BugBountyProgram | undefined> {
 		const name = await vscode.window.showInputBox({ prompt: 'Program name (e.g. "Example Corp VDP")', validateInput: (v: string) => v.trim() ? undefined : 'Required' });
@@ -139,7 +193,7 @@ export class ProgramManager {
 		await this._save();
 	}
 
-	// ── Scope targets ────────────────────────────────────────────────────────
+	// Scope targets
 
 	async addScopeTarget(programId: string, isInScope: boolean): Promise<ScopeTarget | undefined> {
 		const prog = this.getProgram(programId);
@@ -181,17 +235,39 @@ export class ProgramManager {
 		await this._save();
 	}
 
-	// ── Findings ─────────────────────────────────────────────────────────────
+	// Findings
 
 	async addFinding(programId: string): Promise<Finding | undefined> {
 		const prog = this.getProgram(programId);
 		if (!prog) { return undefined; }
 
-		const title = await vscode.window.showInputBox({ prompt: 'Finding title', validateInput: (v: string) => v.trim() ? undefined : 'Required' });
+		const templatePick = await vscode.window.showQuickPick([
+			{ label: 'Custom Finding', id: 'custom' },
+			...findingTemplates.map(template => ({
+				label: template.label,
+				description: `${template.severity.toUpperCase()}${template.cweId ? ` | ${template.cweId}` : ''}`,
+				id: template.id,
+			})),
+		], {
+			placeHolder: 'Choose a finding template',
+			matchOnDescription: true,
+		});
+		if (!templatePick) { return undefined; }
+
+		const selectedTemplate = templatePick.id === 'custom' ? undefined : findingTemplates.find(template => template.id === templatePick.id);
+
+		const title = await vscode.window.showInputBox({
+			prompt: 'Finding title',
+			value: selectedTemplate ? `${selectedTemplate.titlePrefix} <asset/endpoint>` : undefined,
+			validateInput: (v: string) => v.trim() ? undefined : 'Required',
+		});
 		if (!title) { return undefined; }
 
 		const severities = ['critical', 'high', 'medium', 'low', 'info', 'n/a'];
-		const severity = await vscode.window.showQuickPick(severities, { placeHolder: 'Severity' }) as Finding['severity'] | undefined;
+		const severity = await vscode.window.showQuickPick(severities, {
+			placeHolder: 'Severity',
+			ignoreFocusOut: true,
+		}) as Finding['severity'] | undefined ?? selectedTemplate?.severity;
 		if (!severity) { return undefined; }
 
 		const targetPicks = prog.inScope.map(t => ({ label: t.value, description: t.type, id: t.id }));
@@ -201,16 +277,34 @@ export class ProgramManager {
 			targetId = picked?.id || undefined;
 		}
 
-		const cweId = await vscode.window.showInputBox({ prompt: 'CWE ID (optional, e.g. CWE-79)', placeHolder: 'CWE-' });
-		const description = await vscode.window.showInputBox({ prompt: 'Short description' }) ?? '';
+		const cweId = await vscode.window.showInputBox({
+			prompt: 'CWE ID (optional, e.g. CWE-79)',
+			placeHolder: 'CWE-',
+			value: selectedTemplate?.cweId,
+		});
+		const description = await vscode.window.showInputBox({
+			prompt: 'Short description',
+			value: selectedTemplate?.description,
+		}) ?? '';
+		const stepsToReproduce = await vscode.window.showInputBox({
+			prompt: 'Steps to reproduce (optional)',
+			value: selectedTemplate?.stepsToReproduce,
+		}) ?? '';
+		const impact = await vscode.window.showInputBox({
+			prompt: 'Impact statement (optional)',
+			value: selectedTemplate?.impact,
+		}) ?? '';
 
 		return this.createFinding(programId, {
 			title: title.trim(),
+			templateId: selectedTemplate?.id,
 			severity,
 			status: 'new',
 			targetId: targetId || undefined,
 			cweId: cweId?.trim() || undefined,
 			description: description.trim(),
+			stepsToReproduce: stepsToReproduce.trim() || undefined,
+			impact: impact.trim() || undefined,
 		});
 	}
 
@@ -245,17 +339,17 @@ export class ProgramManager {
 		await this._save();
 	}
 
-	// ── Report export ────────────────────────────────────────────────────────
+	// Report export
 
 	exportMarkdownReport(programId: string): string {
 		const prog = this.getProgram(programId);
 		if (!prog) { return ''; }
 
-		const sev = (s: string) => ({ critical: '🔴', high: '🟠', medium: '🟡', low: '🔵', info: '⚪', 'n/a': '⬛' })[s] ?? s;
+		const sev = (s: string) => ({ critical: '[critical]', high: '[high]', medium: '[medium]', low: '[low]', info: '[info]', 'n/a': '[n/a]' })[s] ?? s;
 		const totalBounty = prog.findings.reduce((s, f) => s + (f.bountyEarned ?? 0), 0);
 
 		const lines: string[] = [
-			`# Bug Bounty Report — ${prog.name}`,
+			`# Bug Bounty Report - ${prog.name}`,
 			``,
 			`**Platform:** ${prog.platform}  `,
 			prog.programUrl ? `**URL:** ${prog.programUrl}  ` : '',
@@ -264,7 +358,7 @@ export class ProgramManager {
 			``,
 			`## Scope`,
 			`### In Scope`,
-			...prog.inScope.map(t => `- \`${t.value}\` *(${t.type})* ${t.bountyRange ? `— ${t.bountyRange}` : ''}`),
+			...prog.inScope.map(t => `- \`${t.value}\` *(${t.type})* ${t.bountyRange ? `- ${t.bountyRange}` : ''}`),
 			`### Out of Scope`,
 			...prog.outOfScope.map(t => `- \`${t.value}\` *(${t.type})*`),
 			``,
@@ -276,8 +370,8 @@ export class ProgramManager {
 			`| # | Title | Severity | Status | Target | CWE | Bounty |`,
 			`|---|-------|----------|--------|--------|-----|--------|`,
 			...prog.findings.map((f, i) => {
-				const target = prog.inScope.find(t => t.id === f.targetId)?.value ?? '—';
-				return `| ${i + 1} | ${f.title} | ${sev(f.severity)} ${f.severity} | ${f.status} | ${target} | ${f.cweId ?? '—'} | ${f.bountyEarned != null ? `$${f.bountyEarned}` : '—'} |`;
+				const target = prog.inScope.find(t => t.id === f.targetId)?.value ?? '-';
+				return `| ${i + 1} | ${f.title} | ${sev(f.severity)} ${f.severity} | ${f.status} | ${target} | ${f.cweId ?? '-'} | ${f.bountyEarned !== undefined ? `$${f.bountyEarned}` : '-'} |`;
 			}),
 			``,
 			`---`,
@@ -285,7 +379,7 @@ export class ProgramManager {
 				`### ${i + 1}. ${f.title}`,
 				``,
 				`**Severity:** ${sev(f.severity)} ${f.severity} | **Status:** ${f.status} | **CWE:** ${f.cweId ?? 'N/A'}`,
-				f.cvss != null ? `**CVSS:** ${f.cvss}` : '',
+				f.cvss !== undefined ? `**CVSS:** ${f.cvss}` : '',
 				``,
 				`**Description:** ${f.description}`,
 				f.stepsToReproduce ? `\n**Steps to Reproduce:**\n${f.stepsToReproduce}` : '',

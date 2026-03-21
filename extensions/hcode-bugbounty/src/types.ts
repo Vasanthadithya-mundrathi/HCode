@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) HCode. All rights reserved.
- *  Licensed under the MIT License.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 export type TargetType = 'domain' | 'url' | 'ip' | 'cidr' | 'mobile-app' | 'api' | 'other';
@@ -19,6 +19,7 @@ export interface ScopeTarget {
 export interface Finding {
 	id: string;
 	title: string;
+	templateId?: string;
 	severity: SeverityLevel;
 	status: FindingStatus;
 	targetId?: string;      // references ScopeTarget.id
@@ -31,6 +32,17 @@ export interface Finding {
 	bountyEarned?: number;
 	createdAt: string;      // ISO string
 	updatedAt: string;
+}
+
+export interface FindingTemplate {
+	id: string;
+	label: string;
+	severity: SeverityLevel;
+	cweId?: string;
+	titlePrefix: string;
+	description: string;
+	stepsToReproduce: string;
+	impact: string;
 }
 
 export interface BugBountyProgram {
