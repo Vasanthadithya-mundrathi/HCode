@@ -51,6 +51,12 @@ export function activate(context: vscode.ExtensionContext): HCodeToolsAPI {
 		}),
 	);
 
+	context.subscriptions.push(
+		vscode.commands.registerCommand('hcode.welcome.openWalkthrough', async () => {
+			await vscode.commands.executeCommand('workbench.action.openWalkthrough', 'hcode.hcode-tools#hcode.gettingStarted', false);
+		}),
+	);
+
 	void showFirstRunOnboarding(context);
 
 	// Run tool (from tree or command palette)
@@ -169,13 +175,26 @@ async function showFirstRunOnboarding(context: vscode.ExtensionContext): Promise
 		return;
 	}
 
+	const workbenchConfig = vscode.workspace.getConfiguration('workbench');
+	const currentTheme = workbenchConfig.get<string>('colorTheme');
+	if (!currentTheme || currentTheme === 'Default Dark+') {
+		await workbenchConfig.update('colorTheme', 'HCode Dark', vscode.ConfigurationTarget.Global);
+	}
+
 	await context.globalState.update(onboardingShownKey, true);
+	await vscode.commands.executeCommand('hcode.welcome.openWalkthrough');
 	const action = await vscode.window.showInformationMessage(
 		'HCode is ready. Start with onboarding, tools, or device setup.',
+		'Open Walkthrough',
 		'Open Getting Started',
 		'Run a Tool',
 		'Quick Setup Device',
 	);
+
+	if (action === 'Open Walkthrough') {
+		await vscode.commands.executeCommand('hcode.welcome.openWalkthrough');
+		return;
+	}
 
 	if (action === 'Open Getting Started') {
 		await vscode.commands.executeCommand('hcode.welcome.openGettingStarted');

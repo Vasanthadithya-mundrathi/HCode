@@ -64,6 +64,12 @@
         "title": "Open HCode Getting Started",
         "icon": "$(book)",
         "category": "HCode"
+      },
+      {
+        "command": "hcode.welcome.openWalkthrough",
+        "title": "Open HCode Walkthrough",
+        "icon": "$(compass)",
+        "category": "HCode"
       }
     ],
     "menus": {
@@ -94,13 +100,71 @@
       "commandPalette": [
         { "command": "hcode.tools.run" },
         { "command": "hcode.tools.checkAll" },
-        { "command": "hcode.welcome.openGettingStarted" }
+        { "command": "hcode.welcome.openGettingStarted" },
+        { "command": "hcode.welcome.openWalkthrough" }
       ]
     },
+    "walkthroughs": [
+      {
+        "id": "hcode.gettingStarted",
+        "title": "HCode Getting Started",
+        "description": "Set up HCode workflows for tools, devices, and ACE orchestration.",
+        "steps": [
+          {
+            "id": "hcode.gettingStarted.tools",
+            "title": "Run Your First Security Tool",
+            "description": "Start from the tool runner and execute your first command.",
+            "media": {
+              "image": "media/hcode-sidebar.svg",
+              "altText": "HCode Tools"
+            },
+            "completionEvents": [
+              "onCommand:hcode.tools.run"
+            ]
+          },
+          {
+            "id": "hcode.gettingStarted.devices",
+            "title": "Add a Remote Device",
+            "description": "Configure an SSH device with the quick setup wizard.",
+            "media": {
+              "image": "media/hcode-sidebar.svg",
+              "altText": "HCode Devices"
+            },
+            "completionEvents": [
+              "onCommand:hcode.devices.quickSetup"
+            ]
+          },
+          {
+            "id": "hcode.gettingStarted.ace",
+            "title": "Open ACE Dashboard",
+            "description": "Launch ACE to configure provider routing and run objectives.",
+            "media": {
+              "image": "media/hcode-sidebar.svg",
+              "altText": "HCode ACE"
+            },
+            "completionEvents": [
+              "onCommand:hcode.ace.openDashboard"
+            ]
+          },
+          {
+            "id": "hcode.gettingStarted.docs",
+            "title": "Read the Full Setup Guide",
+            "description": "Open detailed onboarding notes and runbook links.",
+            "media": {
+              "image": "media/hcode-sidebar.svg",
+              "altText": "HCode Docs"
+            },
+            "completionEvents": [
+              "onCommand:hcode.welcome.openGettingStarted"
+            ]
+          }
+        ]
+      }
+    ],
     "viewsWelcome": [
       {
         "view": "hcode.tools.list",
-        "contents": "HCode security workflows start here.\n\n[Run a Tool](command:hcode.tools.run)\n[Open Getting Started](command:hcode.welcome.openGettingStarted)\n[Quick Setup Device](command:hcode.devices.quickSetup)"
+        "contents": "HCode security workflows start here.\n\n[Open HCode Walkthrough](command:hcode.welcome.openWalkthrough)\n[Run a Tool](command:hcode.tools.run)\n[Open Getting Started](command:hcode.welcome.openGettingStarted)\n[Quick Setup Device](command:hcode.devices.quickSetup)"
       }
     ],
     "keybindings": [
