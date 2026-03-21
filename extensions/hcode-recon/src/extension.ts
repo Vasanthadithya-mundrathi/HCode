@@ -226,6 +226,18 @@ export function activate(context: vscode.ExtensionContext): void {
 				await runReconCommand(store, 'WHOIS Lookup', target.label, `whois ${shellEscape(target.label)}`);
 			}
 		}),
+		vscode.commands.registerCommand('hcode.recon.httpx', async () => {
+			const target = await promptForTarget(store);
+			if (target) {
+				await runReconCommand(store, 'HTTPX Probe', target.label, `httpx -u ${shellEscape(target.label)} -title -status-code -tech-detect`);
+			}
+		}),
+		vscode.commands.registerCommand('hcode.recon.nuclei', async () => {
+			const target = await promptForTarget(store);
+			if (target) {
+				await runReconCommand(store, 'Nuclei Scan', target.label, `nuclei -u ${shellEscape(target.label)} -severity low,medium,high,critical`);
+			}
+		}),
 		vscode.commands.registerCommand('hcode.recon.clearResults', async () => {
 			await store.clearResults();
 			vscode.window.showInformationMessage('HCode Recon results cleared.');
@@ -277,6 +289,18 @@ async function runReconCommand(store: ReconStore, label: string, target: string,
 		label,
 		command,
 		createdAt: new Date().toISOString(),
+	});
+
+	void vscode.commands.executeCommand('hcode.context.push', {
+		type: 'recon-run',
+		source: 'hcode-recon',
+		title: label,
+		details: `${target} :: ${command}`,
+		payload: {
+			target,
+			command,
+			label,
+		},
 	});
 }
 

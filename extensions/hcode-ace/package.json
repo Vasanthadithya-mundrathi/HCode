@@ -20,6 +20,7 @@
     "onCommand:hcode.ace.clearProviderKey",
     "onCommand:hcode.ace.openModelManager",
     "onCommand:hcode.ace.runPrompt",
+    "onCommand:hcode.ace.testProviderConnection",
     "onCommand:hcode.ace.runObjective",
     "onCommand:hcode.ace.copyMcpUrl",
     "onCommand:hcode.ace.copyAcpSpec",
@@ -72,6 +73,12 @@
         "title": "Run ACE Prompt",
         "category": "HCode ACE",
         "icon": "$(send)"
+      },
+      {
+        "command": "hcode.ace.testProviderConnection",
+        "title": "Test Provider Connection",
+        "category": "HCode ACE",
+        "icon": "$(pulse)"
       },
       {
         "command": "hcode.ace.runObjective",
@@ -156,6 +163,7 @@
         { "command": "hcode.ace.openDashboard" },
         { "command": "hcode.ace.configureProviderKey" },
         { "command": "hcode.ace.openModelManager" },
+        { "command": "hcode.ace.testProviderConnection" },
         { "command": "hcode.ace.copyAcpSpec" },
         { "command": "hcode.ace.runPrompt" },
         { "command": "hcode.ace.runObjective" },
@@ -179,6 +187,13 @@
         "key": "cmd+alt+p",
         "mac": "cmd+alt+p",
         "linux": "ctrl+alt+p",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "hcode.ace.testProviderConnection",
+        "key": "cmd+alt+t",
+        "mac": "cmd+alt+t",
+        "linux": "ctrl+alt+t",
         "when": "!terminalFocus"
       },
       {

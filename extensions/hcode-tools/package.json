@@ -70,6 +70,12 @@
         "title": "Open HCode Walkthrough",
         "icon": "$(compass)",
         "category": "HCode"
+      },
+      {
+        "command": "hcode.context.showRecent",
+        "title": "Open HCode Context Feed",
+        "icon": "$(symbol-event)",
+        "category": "HCode"
       }
     ],
     "menus": {
@@ -101,7 +107,8 @@
         { "command": "hcode.tools.run" },
         { "command": "hcode.tools.checkAll" },
         { "command": "hcode.welcome.openGettingStarted" },
-        { "command": "hcode.welcome.openWalkthrough" }
+        { "command": "hcode.welcome.openWalkthrough" },
+        { "command": "hcode.context.showRecent" }
       ]
     },
     "walkthroughs": [
@@ -180,6 +187,13 @@
         "key": "cmd+alt+h",
         "mac": "cmd+alt+h",
         "linux": "ctrl+alt+h",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "hcode.context.showRecent",
+        "key": "cmd+alt+shift+c",
+        "mac": "cmd+alt+shift+c",
+        "linux": "ctrl+alt+shift+c",
         "when": "!terminalFocus"
       }
     ]

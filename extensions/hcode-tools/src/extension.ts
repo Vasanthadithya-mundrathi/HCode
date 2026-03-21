@@ -5,6 +5,7 @@
 
 import * as vscode from 'vscode';
 import { TOOLS } from './toolRegistry';
+import { HCodeContextBus, HCodeContextEvent } from './contextBus';
 import { installToolOneClick, runTool, runToolHeadless, showInstallHint, ToolNode, ToolProvider } from './toolProvider';
 
 const onboardingShownKey = 'hcode.onboarding.shown';
@@ -21,9 +22,14 @@ export interface HCodeToolsAPI {
 	getAvailability: () => Map<string, boolean>;
 	/** Install tool by id using one-click flow */
 	installToolHeadless: (toolId: string) => Promise<vscode.Terminal>;
+	/** Publish a shared cross-extension context event */
+	pushContextEvent: (event: Omit<HCodeContextEvent, 'id' | 'createdAt'>) => Promise<HCodeContextEvent>;
+	/** Return recent context events */
+	getContextEvents: () => HCodeContextEvent[];
 }
 
 export function activate(context: vscode.ExtensionContext): HCodeToolsAPI {
+	const contextBus = new HCodeContextBus(context);
 	const provider = new ToolProvider();
 	void provider.ensureAvailabilityChecked();
 
@@ -54,6 +60,29 @@ export function activate(context: vscode.ExtensionContext): HCodeToolsAPI {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('hcode.welcome.openWalkthrough', async () => {
 			await vscode.commands.executeCommand('workbench.action.openWalkthrough', 'hcode.hcode-tools#hcode.gettingStarted', false);
+		}),
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('hcode.context.push', async (event: Omit<HCodeContextEvent, 'id' | 'createdAt'>) => {
+			if (!event || !event.type || !event.source || !event.title) {
+				throw new Error('HCode: context event requires type, source, and title');
+			}
+			return contextBus.publish(event);
+		}),
+		vscode.commands.registerCommand('hcode.context.showRecent', async () => {
+			const events = contextBus.getEvents();
+			const document = await vscode.workspace.openTextDocument({
+				language: 'markdown',
+				content: [
+					'# HCode Context Feed',
+					'',
+					...(events.length ? events.map(event =>
+						`- [${event.createdAt}] ${event.source} :: ${event.type} :: ${event.title}${event.details ? ` - ${event.details}` : ''}`
+					) : ['- No context events published yet.'])
+				].join('\n'),
+			});
+			await vscode.window.showTextDocument(document, { preview: false });
 		}),
 	);
 
@@ -165,6 +194,8 @@ export function activate(context: vscode.ExtensionContext): HCodeToolsAPI {
 
 			return terminal;
 		},
+		pushContextEvent: event => contextBus.publish(event),
+		getContextEvents: () => contextBus.getEvents(),
 	};
 }
 

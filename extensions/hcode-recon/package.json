@@ -16,6 +16,8 @@
       { "command": "hcode.recon.nmapFull", "title": "HCode Recon: Full Nmap Scan (all ports)", "category": "HCode Recon" },
       { "command": "hcode.recon.nmapService", "title": "HCode Recon: Nmap Service/Version Scan", "category": "HCode Recon" },
       { "command": "hcode.recon.subdomain", "title": "HCode Recon: Subdomain Enumeration", "category": "HCode Recon" },
+      { "command": "hcode.recon.httpx", "title": "HCode Recon: HTTPX Probe", "category": "HCode Recon" },
+      { "command": "hcode.recon.nuclei", "title": "HCode Recon: Nuclei Scan", "category": "HCode Recon" },
       { "command": "hcode.recon.whois", "title": "HCode Recon: WHOIS Lookup", "category": "HCode Recon" },
       { "command": "hcode.recon.clearResults", "title": "HCode Recon: Clear Results", "category": "HCode Recon", "icon": "$(trash)" }
     ],
@@ -47,7 +49,16 @@
           "group": "navigation"
         }
       ]
-    }
+    },
+    "keybindings": [
+      {
+        "command": "hcode.recon.newScan",
+        "key": "cmd+alt+n",
+        "mac": "cmd+alt+n",
+        "linux": "ctrl+alt+n",
+        "when": "!terminalFocus"
+      }
+    ]
   },
   "scripts": {
     "compile": "tsc -p tsconfig.json",

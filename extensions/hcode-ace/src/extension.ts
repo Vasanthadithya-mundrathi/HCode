@@ -58,6 +58,10 @@ export function activate(context: vscode.ExtensionContext): HCodeACEApi {
 			await runProviderPrompt(providerRuntime);
 			dashboardProvider.refresh();
 		}),
+		vscode.commands.registerCommand('hcode.ace.testProviderConnection', async () => {
+			await testProviderConnection(providerRuntime);
+			dashboardProvider.refresh();
+		}),
 		vscode.commands.registerCommand('hcode.ace.runObjective', async () => {
 			await runAcpObjective(context, providerRuntime);
 			dashboardProvider.refresh();
@@ -292,6 +296,33 @@ async function runProviderPrompt(providerRuntime: AceProviderRuntime): Promise<v
 		content: renderInvocationMarkdown(prompt.trim(), persona.id, result),
 	});
 	await vscode.window.showTextDocument(document, { preview: false });
+}
+
+async function testProviderConnection(providerRuntime: AceProviderRuntime): Promise<void> {
+	const aceConfiguration = vscode.workspace.getConfiguration('hcode.ace');
+	const providerId = aceConfiguration.get<string>('activeProvider', 'openai');
+	const persona = getDefaultPersona();
+
+	try {
+		const result = await providerRuntime.invoke({
+			providerId,
+			systemPrompt: persona.systemPrompt,
+			prompt: 'Respond with exactly: HCODE_PROVIDER_OK',
+			maxTokens: 64,
+			temperature: 0,
+		});
+
+		const response = result.text.trim();
+		const ok = response.includes('HCODE_PROVIDER_OK');
+		if (ok) {
+			void vscode.window.showInformationMessage(`ACE: Provider ${result.providerLabel} is connected and responsive.`);
+		} else {
+			void vscode.window.showWarningMessage(`ACE: Provider responded, but validation token was not exact. Response: ${response.slice(0, 120)}`);
+		}
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		void vscode.window.showErrorMessage(`ACE: Provider connection test failed (${providerId}) - ${message}`);
+	}
 }
 
 async function runAcpObjective(context: vscode.ExtensionContext, providerRuntime: AceProviderRuntime): Promise<void> {

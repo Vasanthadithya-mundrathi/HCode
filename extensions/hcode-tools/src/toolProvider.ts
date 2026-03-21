@@ -177,6 +177,18 @@ export async function runTool(tool: SecurityTool): Promise<void> {
 	});
 	terminal.show(true);
 	terminal.sendText(`${tool.binary} ${args}`);
+	vscode.window.showInformationMessage(`HCode Tools: Running ${tool.name}. Output is in terminal "HCode: ${tool.name}".`);
+	void vscode.commands.executeCommand('hcode.context.push', {
+		type: 'tool-run',
+		source: 'hcode-tools',
+		title: tool.name,
+		details: `${tool.binary} ${args}`,
+		payload: {
+			toolId: tool.id,
+			binary: tool.binary,
+			args,
+		},
+	});
 }
 
 export async function showInstallHint(tool: SecurityTool): Promise<void> {
