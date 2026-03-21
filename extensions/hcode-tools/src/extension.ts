@@ -7,6 +7,8 @@ import * as vscode from 'vscode';
 import { TOOLS } from './toolRegistry';
 import { installToolOneClick, runTool, runToolHeadless, showInstallHint, ToolNode, ToolProvider } from './toolProvider';
 
+const onboardingShownKey = 'hcode.onboarding.shown';
+
 /** Public API consumed by hcode-mcp-server and any AI agent extension */
 export interface HCodeToolsAPI {
 	/** Full tool registry */
@@ -34,6 +36,22 @@ export function activate(context: vscode.ExtensionContext): HCodeToolsAPI {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('hcode.tools.refresh', () => provider.refresh()),
 	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('hcode.welcome.openGettingStarted', async () => {
+			const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+			if (!workspaceFolder) {
+				vscode.window.showInformationMessage('HCode: Open a workspace folder to view getting started documentation.');
+				return;
+			}
+
+			const uri = vscode.Uri.joinPath(workspaceFolder.uri, 'docs', 'HCODE_GETTING_STARTED.md');
+			const document = await vscode.workspace.openTextDocument(uri);
+			await vscode.window.showTextDocument(document, { preview: false });
+		}),
+	);
+
+	void showFirstRunOnboarding(context);
 
 	// Run tool (from tree or command palette)
 
@@ -145,3 +163,31 @@ export function activate(context: vscode.ExtensionContext): HCodeToolsAPI {
 }
 
 export function deactivate(): void { /* no-op */ }
+
+async function showFirstRunOnboarding(context: vscode.ExtensionContext): Promise<void> {
+	if (context.globalState.get<boolean>(onboardingShownKey, false)) {
+		return;
+	}
+
+	await context.globalState.update(onboardingShownKey, true);
+	const action = await vscode.window.showInformationMessage(
+		'HCode is ready. Start with onboarding, tools, or device setup.',
+		'Open Getting Started',
+		'Run a Tool',
+		'Quick Setup Device',
+	);
+
+	if (action === 'Open Getting Started') {
+		await vscode.commands.executeCommand('hcode.welcome.openGettingStarted');
+		return;
+	}
+
+	if (action === 'Run a Tool') {
+		await vscode.commands.executeCommand('hcode.tools.run');
+		return;
+	}
+
+	if (action === 'Quick Setup Device') {
+		await vscode.commands.executeCommand('hcode.devices.quickSetup');
+	}
+}

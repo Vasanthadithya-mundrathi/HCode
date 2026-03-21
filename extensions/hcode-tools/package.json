@@ -52,6 +52,12 @@
         "title": "Check All Tools",
         "icon": "$(checklist)",
         "category": "HCode Tools"
+      },
+      {
+        "command": "hcode.welcome.openGettingStarted",
+        "title": "Open HCode Getting Started",
+        "icon": "$(book)",
+        "category": "HCode"
       }
     ],
     "menus": {
@@ -81,9 +87,32 @@
       ],
       "commandPalette": [
         { "command": "hcode.tools.run" },
-        { "command": "hcode.tools.checkAll" }
+        { "command": "hcode.tools.checkAll" },
+        { "command": "hcode.welcome.openGettingStarted" }
       ]
-    }
+    },
+    "viewsWelcome": [
+      {
+        "view": "hcode.tools.list",
+        "contents": "HCode security workflows start here.\n\n[Run a Tool](command:hcode.tools.run)\n[Open Getting Started](command:hcode.welcome.openGettingStarted)\n[Quick Setup Device](command:hcode.devices.quickSetup)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "hcode.tools.run",
+        "key": "cmd+alt+r",
+        "mac": "cmd+alt+r",
+        "linux": "ctrl+alt+r",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "hcode.welcome.openGettingStarted",
+        "key": "cmd+alt+h",
+        "mac": "cmd+alt+h",
+        "linux": "ctrl+alt+h",
+        "when": "!terminalFocus"
+      }
+    ]
   },
   "scripts": {
     "compile": "tsc -p tsconfig.json",

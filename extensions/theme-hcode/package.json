@@ -10,6 +10,9 @@
   },
   "categories": ["Themes"],
   "contributes": {
+    "configurationDefaults": {
+      "workbench.colorTheme": "HCode Dark"
+    },
     "themes": [
       {
         "id": "HCode Dark",

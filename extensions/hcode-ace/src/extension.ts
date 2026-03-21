@@ -312,13 +312,33 @@ async function runAcpObjective(providerRuntime: AceProviderRuntime): Promise<voi
 	const persona = getDefaultPersona();
 	const activeProviderId = vscode.workspace.getConfiguration('hcode.ace').get<string>('activeProvider', 'openai');
 	const acpRuntime = new AceAcpRuntime(providerRuntime, vscode.workspace.getConfiguration('hcode.ace').get<number>('acpMaxWorkers', 3));
-	const result = await acpRuntime.runObjective(objective.trim(), persona, activeProviderId);
+
+	let result: AceAcpRunResult;
+	try {
+		result = await vscode.window.withProgress({
+			location: vscode.ProgressLocation.Notification,
+			title: 'ACE ACP: Running objective plan',
+			cancellable: false,
+		}, () => acpRuntime.runObjective(objective.trim(), persona, activeProviderId));
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		void vscode.window.showErrorMessage(`ACE ACP failed: ${message}`);
+		return;
+	}
 
 	const document = await vscode.workspace.openTextDocument({
 		language: 'markdown',
 		content: renderAcpMarkdown(result),
 	});
 	await vscode.window.showTextDocument(document, { preview: false });
+
+	const passedCount = result.workers.filter(worker => worker.validation === 'passed').length;
+	const failedCount = result.workers.length - passedCount;
+	if (failedCount > 0) {
+		void vscode.window.showWarningMessage(`ACE ACP completed with ${passedCount} passed and ${failedCount} failed workers.`);
+	} else {
+		void vscode.window.showInformationMessage(`ACE ACP completed: ${passedCount} workers passed validation.`);
+	}
 }
 
 async function getDashboardModel(providerRegistry: AceProviderRegistry, providerRuntime: AceProviderRuntime): Promise<AceDashboardModel> {

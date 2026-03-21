@@ -1,9 +1,10 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) HCode. All rights reserved.
- *  Licensed under the MIT License.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
+import { randomUUID } from 'crypto';
 import { DeviceManager } from './deviceManager';
 import { DeviceNode, DeviceProvider } from './deviceProvider';
 import { SSHDevice } from './types';
@@ -41,12 +42,15 @@ export function activate(context: vscode.ExtensionContext): HCodeDevicesAPI {
 		vscode.window.registerTreeDataProvider('hcode.devices.list', provider),
 	);
 
-	// ── Add / remove / edit ───────────────────────────────────────────────────
+	// Add / remove / edit
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('hcode.devices.add', async () => {
 			const device = await manager.addDevice();
 			if (device) { vscode.window.showInformationMessage(`HCode: Device "${device.label}" added.`); }
+		}),
+		vscode.commands.registerCommand('hcode.devices.quickSetup', async () => {
+			await runDeviceQuickSetup(manager);
 		}),
 		vscode.commands.registerCommand('hcode.devices.remove', async (node: DeviceNode) => {
 			const id = node?.nodeData.kind === 'device' ? node.nodeData.deviceId : undefined;
@@ -60,7 +64,7 @@ export function activate(context: vscode.ExtensionContext): HCodeDevicesAPI {
 		}),
 	);
 
-	// ── Connect / Disconnect ──────────────────────────────────────────────────
+	// Connect / disconnect
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('hcode.devices.connect', (node: DeviceNode) => {
@@ -75,7 +79,7 @@ export function activate(context: vscode.ExtensionContext): HCodeDevicesAPI {
 		}),
 	);
 
-	// ── Copy SSH command ──────────────────────────────────────────────────────
+	// Copy SSH command
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('hcode.devices.copySSHCommand', async (node: DeviceNode) => {
@@ -87,7 +91,7 @@ export function activate(context: vscode.ExtensionContext): HCodeDevicesAPI {
 		}),
 	);
 
-	// ── Run command on device ─────────────────────────────────────────────────
+	// Run command on device
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('hcode.devices.runCommand', async (node: DeviceCommandTarget) => {
@@ -102,7 +106,7 @@ export function activate(context: vscode.ExtensionContext): HCodeDevicesAPI {
 		}),
 	);
 
-	// ── Run local script on device ────────────────────────────────────────────
+	// Run local script on device
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('hcode.devices.runScript', async (node: DeviceCommandTarget) => {
@@ -138,7 +142,7 @@ export function activate(context: vscode.ExtensionContext): HCodeDevicesAPI {
 		}),
 	);
 
-	// ── Configure AI agent environment on device ──────────────────────────────
+	// Configure AI agent environment on device
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('hcode.devices.setupAgentEnv', async (node: DeviceCommandTarget) => {
@@ -306,6 +310,113 @@ async function bootstrapAgentEnvironment(manager: DeviceManager, deviceId: strin
 	}
 
 	return manager.runCommand(deviceId, profile.script);
+}
+
+async function runDeviceQuickSetup(manager: DeviceManager): Promise<void> {
+	const label = await vscode.window.showInputBox({
+		prompt: 'Device label',
+		placeHolder: 'Kali Lab VM',
+		ignoreFocusOut: true,
+		validateInput: value => value.trim() ? undefined : 'Label is required',
+	});
+	if (!label) {
+		return;
+	}
+
+	const host = await vscode.window.showInputBox({
+		prompt: 'Host or IP',
+		placeHolder: '192.168.64.6',
+		ignoreFocusOut: true,
+		validateInput: value => value.trim() ? undefined : 'Host is required',
+	});
+	if (!host) {
+		return;
+	}
+
+	const portRaw = await vscode.window.showInputBox({
+		prompt: 'SSH port',
+		value: '22',
+		ignoreFocusOut: true,
+		validateInput: value => Number.isFinite(Number(value)) ? undefined : 'Port must be a number',
+	});
+	if (!portRaw) {
+		return;
+	}
+
+	const user = await vscode.window.showInputBox({
+		prompt: 'SSH username',
+		value: 'root',
+		ignoreFocusOut: true,
+		validateInput: value => value.trim() ? undefined : 'Username is required',
+	});
+	if (!user) {
+		return;
+	}
+
+	const authType = await vscode.window.showQuickPick([
+		{ label: 'SSH Key', value: 'key' },
+		{ label: 'Password', value: 'password' },
+	], {
+		placeHolder: 'Authentication method',
+		ignoreFocusOut: true,
+	});
+	if (!authType) {
+		return;
+	}
+
+	let keyPath = '';
+	if (authType.value === 'key') {
+		const pickedKeyPath = await vscode.window.showInputBox({
+			prompt: 'Private key path',
+			value: '~/.ssh/id_rsa',
+			ignoreFocusOut: true,
+		});
+		if (pickedKeyPath === undefined) {
+			return;
+		}
+		keyPath = pickedKeyPath.trim();
+	}
+
+	const tagsRaw = await vscode.window.showInputBox({
+		prompt: 'Tags (optional)',
+		placeHolder: 'lab,kali,vps',
+		ignoreFocusOut: true,
+	});
+	if (tagsRaw === undefined) {
+		return;
+	}
+
+	const notes = await vscode.window.showInputBox({
+		prompt: 'Notes (optional)',
+		ignoreFocusOut: true,
+	});
+	if (notes === undefined) {
+		return;
+	}
+
+	const device: SSHDevice = {
+		id: randomUUID(),
+		label: label.trim(),
+		host: host.trim(),
+		port: Number(portRaw) || 22,
+		user: user.trim(),
+		keyPath,
+		tags: tagsRaw.split(',').map(tag => tag.trim()).filter(Boolean),
+		notes: notes.trim(),
+	};
+
+	const created = await manager.createDevice(device);
+	const action = await vscode.window.showInformationMessage(
+		`HCode: Device "${created.label}" added.`,
+		'Test Connection',
+		'Later',
+	);
+
+	if (action === 'Test Connection') {
+		const terminal = manager.connect(created.id);
+		terminal.sendText('echo HCODE_DEVICE_OK && whoami && hostname');
+		vscode.window.showInformationMessage(`HCode: Sent connection test command to ${created.label}.`);
+	}
 }
 
 export function deactivate(): void { /* no-op */ }

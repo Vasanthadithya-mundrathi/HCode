@@ -27,6 +27,12 @@
         "category": "HCode Devices"
       },
       {
+        "command": "hcode.devices.quickSetup",
+        "title": "Quick Setup Device",
+        "icon": "$(rocket)",
+        "category": "HCode Devices"
+      },
+      {
         "command": "hcode.devices.remove",
         "title": "Remove Device",
         "icon": "$(trash)",
@@ -81,6 +87,11 @@
           "command": "hcode.devices.add",
           "when": "view == hcode.devices.list",
           "group": "navigation"
+        },
+        {
+          "command": "hcode.devices.quickSetup",
+          "when": "view == hcode.devices.list",
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [
@@ -126,12 +137,35 @@
         }
       ],
       "commandPalette": [
+        { "command": "hcode.devices.quickSetup" },
         { "command": "hcode.devices.add" },
         { "command": "hcode.devices.runCommand" },
         { "command": "hcode.devices.runScript" },
         { "command": "hcode.devices.setupAgentEnv" }
       ]
-    }
+    },
+    "viewsWelcome": [
+      {
+        "view": "hcode.devices.list",
+        "contents": "No SSH devices configured.\n\n[Quick Setup Device](command:hcode.devices.quickSetup)\n[Add Device Manually](command:hcode.devices.add)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "hcode.devices.quickSetup",
+        "key": "cmd+alt+d",
+        "mac": "cmd+alt+d",
+        "linux": "ctrl+alt+d",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "hcode.devices.runCommand",
+        "key": "cmd+alt+enter",
+        "mac": "cmd+alt+enter",
+        "linux": "ctrl+alt+enter",
+        "when": "view == hcode.devices.list"
+      }
+    ]
   },
   "scripts": {
     "compile": "tsc -p tsconfig.json",
