@@ -1,4 +1,10 @@
-# VS Code Copilot Instructions
+# HCode Copilot Instructions
+
+## HCode Context
+
+HCode is a security-focused fork/product built on top of Code - OSS. Treat this repository as HCode-first for product identity, documentation, release workflows, and extension behavior.
+
+When touching upstream Code - OSS subsystems, preserve existing architecture and conventions. When adding HCode-owned product surfaces (for example under `extensions/hcode-*`, product docs, or HCode workflows), prefer HCode naming and branding.
 
 ## Project Overview
 
@@ -126,7 +132,8 @@ function f(x: number, y: string): void { }
 
 ### Code Quality
 
-- All files must include Microsoft copyright header
+- Keep existing file headers unchanged unless there is a clear project-wide migration task.
+- For new HCode-owned files, use HCode-appropriate ownership/header text and avoid introducing Microsoft-only ownership headers.
 - Prefer `async` and `await` over `Promise` and `then` calls
 - All user facing messages must be localized using the applicable localization framework (for example `nls.localize()` method)
 - Don't add tests to the wrong test suite (e.g., adding to end of file instead of inside relevant suite)
