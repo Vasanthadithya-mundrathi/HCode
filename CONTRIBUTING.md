@@ -1,13 +1,12 @@
-# Contributing to VS Code
+# Contributing to HCode
 
-Welcome, and thank you for your interest in contributing to VS Code!
+Welcome, and thank you for your interest in contributing to HCode!
 
 There are several ways in which you can contribute, beyond writing code. The goal of this document is to provide a high-level overview of how you can get involved.
 
 ## Asking Questions
 
-
-Have a question? Instead of opening an issue, please ask on [Stack Overflow](https://stackoverflow.com/questions/tagged/visual-studio-code) using the tag `visual-studio-code`.
+Have a question? Please open a discussion in the repository or file an issue with context if the question is about expected behavior.
 
 The active community will be eager to assist you. Your well-worded question will serve as a resource to others searching for help.
 
@@ -15,23 +14,23 @@ The active community will be eager to assist you. Your well-worded question will
 
 Your comments and feedback are welcome, and the development team is available via a handful of different channels.
 
-See the [Feedback Channels](https://github.com/microsoft/vscode/wiki/Feedback-Channels) wiki page for details on how to share your thoughts.
+Use the HCode issue tracker and pull requests to share feedback.
 
 ## Reporting Issues
 
-Have you identified a reproducible problem in VS Code? Do you have a feature request? We want to hear about it! Here's how you can report your issue as effectively as possible.
+Have you identified a reproducible problem in HCode? Do you have a feature request? We want to hear about it.
 
 ### Identify Where to Report
 
-The VS Code project is distributed across multiple repositories. Try to file the issue against the correct repository. Check the list of [Related Projects](https://github.com/microsoft/vscode/wiki/Related-Projects) if you aren't sure which repo is correct.
+File issues in the HCode repository: [HCode Issues](https://github.com/Vasanthadithya-mundrathi/HCode/issues)
 
 Can you recreate the issue even after [disabling all extensions](https://code.visualstudio.com/docs/editor/extension-gallery#_disable-an-extension)? If you find the issue is caused by an extension you have installed, please file an issue on the extension's repo directly.
 
 ### Look For an Existing Issue
 
-Before you create a new issue, please do a search in [open issues](https://github.com/microsoft/vscode/issues) to see if the issue or feature request has already been filed.
+Before you create a new issue, please search [open issues](https://github.com/Vasanthadithya-mundrathi/HCode/issues) to see whether it has already been filed.
 
-Be sure to scan through the [most popular](https://github.com/microsoft/vscode/issues?q=is%3Aopen+is%3Aissue+label%3Afeature-request+sort%3Areactions-%2B1-desc) feature requests.
+Search by labels and keywords to avoid duplicates.
 
 If you find your issue already exists, make relevant comments and add your [reaction](https://github.com/blog/2119-add-reactions-to-pull-requests-issues-and-comments). Use a reaction in place of a "+1" comment:
 
@@ -48,11 +47,11 @@ Do not add your issue as a comment to an existing issue unless it's for the iden
 
 The more information you can provide, the more likely someone will be successful at reproducing the issue and finding a fix.
 
-The built-in tool for reporting an issue, which you can access by using `Report Issue` in VS Code's Help menu, can help streamline this process by automatically providing the version of VS Code, all your installed extensions, and your system info. Additionally, the tool will search among existing issues to see if a similar issue already exists.
+The built-in Report Issue tool can help streamline this process by collecting version and system details.
 
 Please include the following with each issue:
 
-* Version of VS Code
+* Version of HCode
 * Your operating system
 * List of extensions that you have installed
 * Reproducible steps (1... 2... 3...) that cause the issue
@@ -64,7 +63,7 @@ Please include the following with each issue:
 
 ### Creating Pull Requests
 
-* Please refer to the article on [creating pull requests](https://github.com/microsoft/vscode/wiki/How-to-Contribute#pull-requests) and contributing to this project.
+* Open pull requests against the main branch with a clear problem statement, implementation summary, and validation notes.
 
 ### Final Checklist
 
@@ -78,21 +77,21 @@ Don't feel bad if the developers can't reproduce the issue right away. They will
 
 ### Follow Your Issue
 
-Once submitted, your report will go into the [issue tracking](https://github.com/microsoft/vscode/wiki/Issue-Tracking) workflow. Be sure to understand what will happen next, so you know what to expect and how to continue to assist throughout the process.
+Once submitted, your report will be triaged in the HCode issue workflow.
 
 ## Automated Issue Management
 
-We use GitHub Actions to help us manage issues. These Actions and their descriptions can be [viewed here](https://github.com/microsoft/vscode-github-triage-actions). Some examples of what these Actions do are:
+We use GitHub Actions to help manage issue and PR hygiene.
 
 * Automatically close any issue marked `info-needed` if there has been no response in the past 7 days.
 * Automatically lock issues 45 days after they are closed.
-* Automatically implement the VS Code [feature request pipeline](https://github.com/microsoft/vscode/wiki/Issues-Triaging#managing-feature-requests).
+* Automatically apply issue and pull request labels.
 
 If you believe the bot got something wrong, please open a new issue and let us know.
 
 ## Contributing Fixes
 
-If you are interested in writing code to fix issues, please see [How to Contribute](https://github.com/microsoft/vscode/wiki/How-to-Contribute) in the wiki.
+If you are interested in writing code to fix issues, start with README.md and existing workspace tasks.
 
 ## Thank You
 
